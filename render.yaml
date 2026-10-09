@@ -9,7 +9,7 @@ services:
     name: bearstards
     runtime: python
     plan: starter
-    buildCommand: ./build.sh
+    buildCommand: bash build.sh
     startCommand: cd backend && gunicorn config.wsgi:application
     # Solo se despliega cuando el CI de GitHub Actions pasa en verde
     autoDeployTrigger: checksPass
