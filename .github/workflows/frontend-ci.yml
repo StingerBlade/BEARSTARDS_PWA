@@ -1,0 +1,53 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [main, development]
+    paths:
+      - "ui/**"
+      - ".github/workflows/frontend-ci.yml"
+  pull_request:
+    branches: [main, development]
+    paths:
+      - "ui/**"
+      - ".github/workflows/frontend-ci.yml"
+
+# Cancela la corrida anterior si se hace otro push a la misma rama/PR
+concurrency:
+  group: frontend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint-and-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ui
+    steps:
+      - uses: actions/checkout@v4
+
+      # Vite 8 requiere Node 20.19+ o 22.12+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Guardar build como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-dist
+          path: ui/dist
+          retention-days: 7

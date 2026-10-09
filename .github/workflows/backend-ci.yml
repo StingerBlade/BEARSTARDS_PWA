@@ -1,0 +1,88 @@
+name: Backend CI
+
+# Solo corre cuando cambia backend/ (cuando G. Gonzalez suba el proyecto Django).
+# Mientras no exista backend/manage.py, el job termina en verde sin hacer nada.
+on:
+  push:
+    branches: [main, development]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+  pull_request:
+    branches: [main, development]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    # Postgres temporal solo para los tests. Produccion usa Supabase;
+    # el CI NUNCA se conecta a Supabase.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: bearstards_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/bearstards_test
+      SECRET_KEY: ci-only-insecure-key
+      DEBUG: "False"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detectar proyecto Django
+        id: check
+        run: |
+          if [ -f backend/manage.py ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "backend/manage.py no existe todavia: se omite el CI del back."
+          fi
+
+      - uses: actions/setup-python@v5
+        if: steps.check.outputs.exists == 'true'
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+
+      - name: Instalar dependencias
+        if: steps.check.outputs.exists == 'true'
+        working-directory: backend
+        run: pip install -r requirements.txt ruff
+
+      - name: Lint (ruff)
+        if: steps.check.outputs.exists == 'true'
+        working-directory: backend
+        run: ruff check .
+
+      - name: Verificar que no falten migraciones
+        if: steps.check.outputs.exists == 'true'
+        working-directory: backend
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Tests
+        if: steps.check.outputs.exists == 'true'
+        working-directory: backend
+        run: python manage.py test
