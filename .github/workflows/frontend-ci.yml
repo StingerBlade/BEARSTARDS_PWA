@@ -1,16 +1,12 @@
 name: Frontend CI
 
+# Sin filtro de rutas a proposito: si el check es obligatorio en main, debe
+# reportar siempre; de lo contrario los PRs que no tocan ui/ quedan bloqueados.
 on:
   push:
     branches: [main, development]
-    paths:
-      - "ui/**"
-      - ".github/workflows/frontend-ci.yml"
   pull_request:
     branches: [main, development]
-    paths:
-      - "ui/**"
-      - ".github/workflows/frontend-ci.yml"
 
 # Cancela la corrida anterior si se hace otro push a la misma rama/PR
 concurrency:

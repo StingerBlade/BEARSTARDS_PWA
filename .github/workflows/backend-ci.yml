@@ -1,18 +1,12 @@
 name: Backend CI
 
-# Solo corre cuando cambia backend/ (cuando G. Gonzalez suba el proyecto Django).
-# Mientras no exista backend/manage.py, el job termina en verde sin hacer nada.
+# Sin filtro de rutas a proposito (ver frontend-ci.yml). Mientras no exista
+# backend/manage.py, el job termina en verde sin hacer nada.
 on:
   push:
     branches: [main, development]
-    paths:
-      - "backend/**"
-      - ".github/workflows/backend-ci.yml"
   pull_request:
     branches: [main, development]
-    paths:
-      - "backend/**"
-      - ".github/workflows/backend-ci.yml"
 
 concurrency:
   group: backend-ci-${{ github.ref }}
