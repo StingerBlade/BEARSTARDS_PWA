@@ -30,6 +30,12 @@ El proyecto usa una **arquitectura Base**: una sola aplicación propia que conti
                     │
          Supabase (PostgreSQL)
 ```
+### Create
+El create solicitado estara en el formulario de registro de nuevos usuarios
+
+### Read
+El read solicitado estara a la hora de mostrar estadisticas despues de iniciar sesion
+
 
 ### Stack
 
