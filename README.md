@@ -1,201 +1,130 @@
 # BEARSTARDS PWA
 
-PWA de ranking de **Little Bearstards** (Turbo Studios). Muestra el ranking de partidas del videojuego y recibe los resultados desde Unity.
+# Integrantes
+    Angel David Arras Orozco
+    Angel Guillermo Gonzalez Gomez
+    Dylan Munoz Flores
+    Guillermo Martinez Delgadillo
+    Victor Hugo Baeza Rocha
 
-Planeación y documentación: [planeacion_integradora](https://github.com/StingerBlade/planeacion_integradora).
+PWA de estadísticas y ranking de **Little Bearstards** (Turbo Studios). Muestra el ranking de jugadores y las mejores puntuaciones, permite registrarse e iniciar sesión, y recibe desde el juego (Unity) el resultado de cada partida.
 
-## Stack
+## Arquitectura
 
-| Capa | Tecnología | Responsable |
-|---|---|---|
-| Front (`ui/`) | React 19 + Vite 8 + `vite-plugin-pwa` | Angel Arras |
-| Back (`backend/`) | Django + Django REST Framework | G. González |
-| Base de datos | **PostgreSQL en Supabase** | — |
-| Hosting | Render (un Web Service, plan Starter $7/mes) | — |
-| CI | GitHub Actions | — |
+### Arquitectura Base
 
-> **Base de datos: Supabase.** Se usa únicamente como PostgreSQL administrado, conectado desde Django por `DATABASE_URL` (Session pooler). No se usa la API ni la autenticación de Supabase. El proyecto de Supabase ya está creado.
+El proyecto usa una **arquitectura Base**: una sola aplicación propia que contiene la API, las reglas de negocio, la autenticación y el sitio web, desplegada como un solo servicio. La misma API REST la consumen la PWA y el juego en Unity.
 
-## Arquitectura de despliegue
-
-Un solo servicio en Render:
+### Vista general
 
 ```
-navegador ──► Render Web Service (gunicorn + Django)
-                  ├─ /api/...   → Django REST (POST /api/resultados, GET /api/ranking)
-                  └─ /         → build de Vite (ui/dist) servido con WhiteNoise
-                          │
-                          └─► Supabase (PostgreSQL)
+   PWA (React)              Juego (Unity)
+   ranking, login           login, reporta
+   y perfil                 partidas
+        │                        │
+        └── HTTPS + JSON (Token) ┘
+                    │
+     Render · un solo servicio (Django)
+       /api/  → Django REST Framework
+       /      → build de la PWA (Vite)
+                    │
+         Supabase (PostgreSQL)
 ```
 
-Front y back comparten dominio, así que no hace falta configurar CORS en producción. En desarrollo, Vite corre en `localhost:5173` y apunta a la API con un proxy (ver *Desarrollo local*).
+### Stack
 
----
-
-## Reglas para trabajar en el repo
-
-Leer esto antes de abrir tu primer PR: casi todos los problemas con el pipeline vienen de saltarse una de estas reglas.
-
-### 1. Flujo de ramas
-
-```
-feat/<tu-nombre>/<tema>  ──PR──►  development  ──PR──►  main  ──►  Render (deploy)
-```
-
-- **Nunca** se hace push directo a `main` ni a `development`: todo entra por Pull Request.
-- Ramas de trabajo: `feat/<nombre>/<tema>` (funcionalidad), `fix/<nombre>/<tema>` (corrección), `chore/<nombre>/<tema>` (infraestructura, docs).
-- Los PR normales van a **`development`**. Solo se abre PR de `development` a `main` cuando hay algo estable que se quiere publicar: **cada merge a `main` despliega a producción** en Render.
-- Una rama = un tema. PRs pequeños (idealmente menos de ~400 líneas) se revisan y pasan más rápido.
-- Antes de abrir el PR, actualiza tu rama con la base (`git pull origin development`) y resuelve conflictos en local.
-
-### 2. Reglas de todo PR
-
-1. **El CI debe estar en verde** para poder mergear. No se mergea con checks rojos ni pendientes.
-2. **Al menos 1 aprobación** de otra persona del equipo. Quien abre el PR no lo aprueba ni lo mergea sin revisión.
-3. Llenar la plantilla del PR (se carga sola): qué cambia y el checklist.
-4. Título claro en español, en imperativo y con prefijo: `feat: ...`, `fix: ...`, `chore: ...`, `docs: ...`, `ci: ...`.
-5. Merge con **Squash and merge** para que `main` quede con un commit por PR.
-6. Si el CI falla, **se arregla en la misma rama** con un commit nuevo. No se cierra y reabre el PR para "reintentar", salvo que el fallo sea ajeno al código (ver *Solución de problemas*).
-7. **Jamás** subir secretos: `.env`, contraseñas, llaves de Supabase, `SECRET_KEY` reales. Si se sube uno por error, hay que **rotarlo** (cambiarlo en Supabase/Render) — borrarlo del repo no basta porque queda en el historial.
-
-### 3. Qué revisa el CI
-
-Se ejecutan **en todo PR y en todo push a `main`/`development`**, sin importar qué archivos cambien:
-
-| Check (nombre exacto) | Qué hace | Si falla, normalmente es porque… |
-|---|---|---|
-| `Frontend CI / lint-and-build` | `npm ci`, `npm run lint`, `npm run build` en `ui/` | error de ESLint, error de compilación, `package-lock.json` desincronizado |
-| `Backend CI / lint-and-test` | `ruff check`, `makemigrations --check`, `manage.py test` en `backend/` con Postgres temporal | error de ruff, falta una migración, un test falló, falta una dependencia en `requirements.txt` |
-
-- Mientras `backend/manage.py` no exista, `Backend CI` termina en verde sin hacer nada. Es normal.
-- El CI **no** se conecta a Supabase: usa su propio Postgres desechable, así que los tests nunca tocan datos reales.
-- **CD:** Render solo despliega `main` cuando el CI pasa (`autoDeployTrigger: checksPass`).
-
-### 4. Checklist para el FRONT (`ui/`)
-
-Antes de hacer push, desde `ui/`:
-
-```bash
-npm ci            # instala EXACTAMENTE lo que dice package-lock.json
-npm run lint      # debe terminar sin errores
-npm run build     # debe compilar
-```
-
-- **Node 22** (el CI usa 22; Vite 8 exige 20.19+ o 22.12+). Con Node viejo el build local puede fallar.
-- Si agregas o quitas una dependencia, usa `npm install <paquete>` **desde `ui/`** y sube `package.json` **y** `package-lock.json` juntos. Si el lock queda desincronizado, `npm ci` falla en el CI.
-- No subas `node_modules/` ni `dist/` (están en `.gitignore`).
-- No dejes `console.log` de depuración ni código comentado.
-- Llamadas a la API siempre a rutas relativas (`/api/ranking`), nunca con `http://localhost:8000` escrito a mano: en producción front y back comparten dominio.
-- Cambios al PWA (`vite.config.js`, manifest, service worker): probar con `npm run build && npm run preview`, porque el service worker no se activa en `npm run dev`.
-
-### 5. Checklist para el BACK (`backend/`)
-
-Antes de hacer push, desde `backend/` (con el entorno virtual activo):
-
-```bash
-pip install -r requirements.txt ruff
-ruff check .                              # lint
-python manage.py makemigrations --check   # ¿faltan migraciones?
-python manage.py test                     # tests
-```
-
-- **Python 3.12.**
-- **Toda librería nueva va en `backend/requirements.txt`.** Si solo la instalas en tu máquina, el CI y Render fallarán con `ModuleNotFoundError`.
-- **Si cambias un modelo, sube la migración** (`python manage.py makemigrations`). El CI rechaza el PR si el modelo y las migraciones no coinciden. No edites a mano migraciones ya mergeadas.
-- **Cada endpoint nuevo lleva al menos un test.** El CI es tan útil como los tests que tenga.
-- Los tests no deben depender de datos del Supabase real ni de internet.
-- Toda configuración sensible se lee de variables de entorno (`os.environ`), nunca valores fijos en `settings.py`.
-- Proyecto Django llamado `config` y estructura `backend/manage.py` (el CI y Render dependen de esas rutas).
-- Rutas de la API bajo `/api/`. Debe existir `GET /api/health/` (Render lo usa para saber si el servicio está vivo).
-- Configuración de ruff: se recomienda un `backend/pyproject.toml` con `[tool.ruff]` para que todos usen las mismas reglas.
-
-### 6. Qué necesita el backend para desplegarse
-
-`backend/requirements.txt` con `django`, `djangorestframework`, `gunicorn`, `whitenoise`, `dj-database-url` y `psycopg[binary]`; y en `settings.py`:
-
-```python
-import os, dj_database_url
-from pathlib import Path
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-SECRET_KEY = os.environ["SECRET_KEY"]
-DEBUG = os.environ.get("DEBUG", "False") == "True"
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",")
-
-DATABASES = {
-    "default": dj_database_url.config(
-        env="DATABASE_URL", conn_max_age=600, ssl_require=not DEBUG
-    )
-}
-# Si se usa el pooler en modo transaccion (puerto 6543), añadir:
-# DATABASES["default"]["DISABLE_SERVER_SIDE_CURSORS"] = True
-
-MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
-STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
-# El build de Vite (index.html, assets, service worker del PWA) se sirve desde raíz:
-WHITENOISE_ROOT = BASE_DIR.parent / "ui" / "dist"
-WHITENOISE_INDEX_FILE = True
-```
-
-Si el front usa React Router, el back necesitará una ruta *catch-all* hacia `index.html`.
-
-> Con `ssl_require=not DEBUG`, los tests del CI (`DEBUG=False` contra un Postgres sin SSL) pueden fallar con un error de SSL. Si pasa, en el entorno de tests usar `DEBUG=True` o ajustar `ssl_require` por variable de entorno.
-
-### 7. Configuración del repositorio (una sola vez, por quien administra)
-
-En GitHub → Settings → Branches, regla para `main` **y** para `development`:
-
-- ✅ *Require a pull request before merging* (1 aprobación).
-- ✅ *Require status checks to pass before merging*, y añadir **`Frontend CI / lint-and-build`** y **`Backend CI / lint-and-test`** (aparecen en el buscador después de que hayan corrido al menos una vez).
-- ✅ *Require branches to be up to date before merging*.
-- ✅ *Do not allow bypassing the above settings*.
-
-En Settings → General → Pull Requests: dejar solo *Allow squash merging* y activar *Automatically delete head branches*.
-
-En Render: *Settings → Build & Deploy → Auto-Deploy: After CI checks pass* (ya viene así desde `render.yaml`).
-
-### 8. Solución de problemas del pipeline
-
-| Síntoma | Causa y solución |
+| Capa | Tecnología |
 |---|---|
-| `npm ci` falla: *package.json and package-lock.json are not in sync* | Modificaste dependencias sin subir el lock. Corre `npm install` en `ui/` y sube `package-lock.json`. |
-| Lint falla en el CI pero no en mi máquina | Tu rama está desactualizada o usas otra versión de Node. Usa Node 22 y corre `npm ci`. |
-| Build falla con error de sintaxis de Vite | Node < 20.19. Actualiza a Node 22. |
-| `ModuleNotFoundError` en el CI o en Render | Falta la librería en `backend/requirements.txt`. |
-| `Backend CI` falla en *makemigrations --check* | Cambiaste un modelo sin migración. Corre `python manage.py makemigrations` y sube el archivo. |
-| Test falla solo en el CI | El test depende de datos locales, del orden de ejecución, de la zona horaria o de Supabase. Debe ser independiente. |
-| El PR dice *Expected — Waiting for status to be reported* y no avanza | El nombre del check requerido no coincide, o el workflow no corrió. Revisa la pestaña Actions; si el workflow no aparece, haz un commit nuevo a la rama. |
-| El check falló por algo ajeno (red, GitHub caído, `Error: The operation was canceled`) | Re-ejecuta con *Re-run jobs*. Si falla otra vez, es real: revísalo. |
-| Render no despliega tras el merge | Espera a que el CI de `main` termine en verde (`checksPass`). Si el CI pasó y no hay deploy, revisa el log en el dashboard de Render. |
-| Deploy de Render falla en `cd backend` | `backend/` no existe todavía o no se llama así. |
-| Deploy falla conectando a la base de datos | `DATABASE_URL` mal copiada, usa la conexión directa en vez del *Session pooler*, o la contraseña tiene caracteres especiales sin codificar (hay que *percent-encode* en la URL). |
+| Front (`ui/`) | React 19 + Vite 8 + `vite-plugin-pwa` |
+| Back (`backend/`) | Django + Django REST Framework |
+| Base de datos | PostgreSQL en Supabase (solo como base de datos) |
+| Hosting | Render, un Web Service |
+| CI/CD | GitHub Actions → Render |
 
----
+## Diseño de la PWA
 
-## Puesta en marcha de infraestructura (una sola vez)
+### Pantallas
 
-1. **Supabase:** proyecto creado. Cadena de conexión: *Connect → Session pooler → URI*. Se usa el pooler y no la conexión directa porque Render solo tiene IPv4.
-2. **Render** (cuando exista `backend/`): *New → Blueprint*, elegir este repo y la rama `main`. Capturar `DATABASE_URL` y `ALLOWED_HOSTS` (el dominio `*.onrender.com`).
-3. **GitHub:** reglas de rama de la sección 7.
+| Pantalla | Contenido | ¿Requiere sesión? |
+|---|---|---|
+| Ranking | Top 10 de jugadores por puntos totales | No |
+| Mejores puntuaciones | Top 10 de puntuaciones en una sola partida | No |
+| Iniciar sesión / Registro | Acceso con usuario y contraseña | No |
+| Perfil | Estadísticas del jugador con sesión iniciada | Sí |
 
-Los secretos reales (`DATABASE_URL`, `SECRET_KEY`) viven **solo en Render**, nunca en el repositorio, en chats ni en tableros.
+### Sesiones
 
-## Desarrollo local
+- El registro y el inicio de sesión devuelven un **token** que identifica al jugador.
+- Se usa **el mismo sistema en la PWA y en el juego**: una cuenta creada en un lado sirve en el otro.
+- Para jugar en línea es **obligatorio iniciar sesión**.
 
-```bash
-# Front
-cd ui
-npm ci
-npm run dev      # http://localhost:5173
-npm run lint
-npm run build
+### Funcionamiento sin conexión
+
+- La interfaz queda guardada en el dispositivo y abre aunque no haya internet.
+- El ranking muestra datos frescos cuando hay red y, sin red, el último que se consultó.
+- Los datos personales y el inicio de sesión nunca se guardan en caché.
+
+## Datos que maneja
+
+**Jugador**
+- Usuario y contraseña (la contraseña se guarda cifrada).
+- Partidas jugadas, victorias, derrotas y empates.
+- Kills.
+- Puntos totales.
+- Mejor puntuación.
+
+**Partida**
+- Identificador único de la partida.
+- Fecha en que terminó.
+- Si terminó por abandono.
+
+**Participación** (un registro por cada jugador en cada partida)
+- Puntos y kills que hizo en esa partida.
+- Resultado: victoria, derrota o empate.
+- Si abandonó.
+
+### Reglas del juego que respetan los datos
+
+- Todas las partidas duran 10 minutos.
+- Gana quien tenga más puntos; si quedan iguales, es empate.
+- Quien abandona pierde automáticamente.
+- El juego envía los datos solo al terminar la partida, y cada partida se registra una sola vez.
+
+## Flujo de trabajo y CI/CD
+
+### Ramas
+
+```
+feat/<nombre>/<tema>  ──PR──►  development  ──PR──►  main  ──►  Render (deploy)
 ```
 
-Para que el front hable con el back en local, en `ui/vite.config.js` se agrega un proxy a `/api` hacia `http://localhost:8000` cuando el backend exista:
+- Nunca se hace push directo a `main` ni a `development`: todo entra por Pull Request.
+- Ramas de trabajo: `feat/<nombre>/<tema>`, `fix/<nombre>/<tema>` y `chore/<nombre>/<tema>`.
+- Los PR normales van a `development`. Solo se abre PR de `development` a `main` cuando hay algo estable, porque **cada merge a `main` despliega a producción**.
 
-```js
-server: { proxy: { "/api": "http://localhost:8000" } },
-```
+### Reglas de todo PR
 
-Variables de entorno de ejemplo en [`.env.example`](.env.example). Copiarlas a `backend/.env` (está ignorado por Git).
+1. El CI debe estar en verde para poder mergear.
+2. Al menos 1 aprobación de otra persona del equipo.
+3. Título en español con prefijo: `feat:`, `fix:`, `chore:`, `docs:` o `ci:`.
+4. Merge con **Squash and merge** (un commit por PR en `main`).
+5. Si el CI falla, se corrige en la misma rama con un commit nuevo.
+6. Nunca subir secretos (`.env`, contraseñas, llaves de Supabase, `SECRET_KEY`). Si se sube uno por error, hay que cambiarlo, porque queda en el historial.
+
+### Checks de GitHub Actions
+
+Corren en los PR y en los push a `main` y `development`.
+
+| Check | Qué revisa | Cuándo corre |
+|---|---|---|
+| `Frontend CI / lint-and-build` | En `ui/`: `npm ci`, `npm run lint` y `npm run build` con Node 22. Guarda el build como artefacto por 7 días. | Cuando hay cambios en `ui/` o en su workflow |
+| `Backend CI / lint-and-test` | En `backend/`: `ruff check`, que no falten migraciones (`makemigrations --check`) y `manage.py test`, contra un PostgreSQL temporal. | Siempre. Mientras no exista `backend/manage.py`, termina en verde sin hacer nada |
+
+- El CI **nunca se conecta a Supabase**: usa su propia base de datos desechable, así que los tests no tocan datos reales.
+- Si llega otro push a la misma rama, se cancela la corrida anterior.
+
+### Despliegue (CD)
+
+- Render despliega `main` **solo cuando el CI pasa** (`autoDeployTrigger: checksPass`).
+- En cada deploy, `build.sh` compila la PWA, instala el backend, junta los archivos estáticos y aplica las migraciones en Supabase.
+- Los secretos (`DATABASE_URL`, `SECRET_KEY`) viven solo en Render.
