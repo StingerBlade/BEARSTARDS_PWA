@@ -10,28 +10,23 @@
 
 PWA de **Little Bearstards** (Turbo Studios). Presenta el juego, muestra el ranking de jugadores, permite registrarse e iniciar sesión, y recibe desde el juego (Unity) el resultado de cada partida.
 
-> **Estado:** en desarrollo. Este documento describe la arquitectura y el diseño acordados; el backend y el despliegue en Render todavía no existen.
+> **Estado:** en desarrollo. Este documento describe la propuesta de arquitectura e interfaz; el backend y el despliegue en Render todavía no existen.
+### Diagrama de arquitectura
 
-## Arquitectura
+```mermaid
+flowchart TB
+    PWA["PWA (React + Vite)<br/>inicio, ranking, login, panel"]
+    Unity["Juego (Unity + Photon)<br/>login y reporte de partidas"]
+    subgraph Render["Render · un solo servicio"]
+        API["/api/ · Django REST Framework"]
+        Static["/ · build de la PWA (WhiteNoise)"]
+    end
+    DB[("Supabase · PostgreSQL")]
 
-### Arquitectura Base
-
-El proyecto usa una **arquitectura Base**: una sola aplicación propia que contiene la API, las reglas de negocio, la autenticación y el sitio web, desplegada como un solo servicio. La misma API REST la consumen la PWA y el juego en Unity.
-
-### Vista general
-
-```
-   PWA (React)              Juego (Unity)
-   inicio, ranking,         login, reporta
-   login y panel            partidas
-        │                        │
-        └── HTTPS + JSON (Token) ┘
-                    │
-     Render · un solo servicio (Django)
-       /api/  → Django REST Framework
-       /      → build de la PWA (Vite)
-                    │
-         Supabase (PostgreSQL)
+    PWA -- "HTTPS + JSON (Token)" --> API
+    Unity -- "HTTPS + JSON (Token)" --> API
+    PWA -. "descarga la app" .-> Static
+    API --> DB
 ```
 
 ### Stack
@@ -43,6 +38,95 @@ El proyecto usa una **arquitectura Base**: una sola aplicación propia que conti
 | Base de datos | PostgreSQL en Supabase (solo como base de datos) |
 | Hosting | Render, un Web Service |
 | CI/CD | GitHub Actions → Render |
+## Consumo de API
+
+La PWA obtiene todos sus datos de la API REST con `fetch` y rutas relativas (`/api/...`), porque front y back comparten dominio.
+
+### Endpoints
+
+| Método y ruta | Sesión | Uso en la PWA |
+|---|---|---|
+| `POST /api/auth/registro/` | No | Crear cuenta; devuelve el token y el jugador |
+| `POST /api/auth/login/` | No | Iniciar sesión; devuelve el token y el jugador |
+| `POST /api/auth/logout/` | Sí | Cerrar sesión |
+| `GET /api/ranking/` | No | Lista del ranking (top 10 por puntos totales) |
+| `GET /api/yo/` | Sí | Estadísticas del jugador para el Panel |
+| `GET /api/yo/partidas/` | Sí | Historial de las últimas partidas del jugador (lista y gráfica) |
+| `POST /api/partidas/` | Sí | Lo usa el juego al terminar una partida (no la PWA) |
+
+### Cómo se consumen y muestran las listas
+
+- Un solo módulo, `src/api/cliente.js`, hace todas las peticiones y agrega `Authorization: Token <token>` cuando hay sesión.
+- El **ranking** y el **historial** se piden al abrir su pantalla y se dibujan a partir del JSON recibido: podio y tabla en Ranking; tabla y gráfica en Panel.
+- Cada lista contempla tres estados: **cargando**, **vacía** (por ejemplo, un jugador sin partidas) y **error** (sin conexión o servidor caído).
+- Si la API responde `401`, el token ya no sirve: se borra la sesión y se manda al usuario a iniciar sesión.
+
+```mermaid
+sequenceDiagram
+    actor U as Usuario
+    participant P as PWA (React)
+    participant SW as Service Worker
+    participant API as API Django
+    participant DB as Supabase
+
+    U->>P: Abre Ranking
+    P->>SW: GET /api/ranking/
+    alt Con conexión
+        SW->>API: GET /api/ranking/
+        API->>DB: Top 10 por puntos totales
+        DB-->>API: Filas
+        API-->>SW: JSON
+        SW-->>P: JSON (y guarda una copia)
+    else Sin conexión
+        SW-->>P: Última copia guardada
+    end
+    P-->>U: Podio y tabla
+```
+
+## Estrategia PWA
+
+### Manifiesto
+
+Lo genera `vite-plugin-pwa` (`manifest.webmanifest`):
+
+| Campo | Valor |
+|---|---|
+| `name` / `short_name` | Little Bearstards / Bearstards |
+| `lang` | `es` |
+| `start_url` | `/` |
+| `display` | `standalone` (se abre como app, sin barra del navegador) |
+| `theme_color` / `background_color` | `#241a55` (`night`) |
+| `icons` | 192×192 y 512×512, más una versión `maskable` para Android |
+
+Con el manifiesto, la PWA se puede **instalar** en el celular o la computadora y abre con su propio ícono y pantalla de inicio.
+
+### Service Worker
+
+Lo genera `vite-plugin-pwa` (Workbox), con `registerType: "autoUpdate"`.
+
+| Recurso | Estrategia | Resultado |
+|---|---|---|
+| HTML, JS, CSS, fuentes, íconos e imágenes de los osos | *Precache* | La app abre completa sin internet |
+| Navegación (cualquier ruta) | Respaldo a `index.html` | Nunca aparece la página de error del navegador |
+| `GET /api/ranking/` | *NetworkFirst* | Datos frescos con red; sin red, el último ranking visto |
+| `/api/auth/*`, `/api/yo/*` | Sin caché | Los datos personales y la sesión nunca quedan guardados |
+
+### Funcionamiento en segundo plano
+
+- El service worker se instala y trabaja **aparte de la página**: atiende las peticiones aunque la app esté cerrada o sin red.
+- Cuando se publica una nueva versión, el service worker la **descarga en segundo plano** y la activa sola en la siguiente apertura (`autoUpdate`).
+- Cada vez que hay conexión, la copia del ranking se **actualiza en segundo plano**, lista para la próxima vez que no haya internet.
+
+```mermaid
+flowchart LR
+    A["Usuario abre la PWA"] --> B{"¿Hay service worker?"}
+    B -- "No (primera visita)" --> C["Descarga la app y la guarda en caché"]
+    B -- "Sí" --> D["Abre desde caché al instante"]
+    D --> E{"¿Hay conexión?"}
+    E -- "Sí" --> F["Pide datos frescos a la API<br/>y revisa si hay versión nueva"]
+    E -- "No" --> G["Muestra la última copia del ranking"]
+    F --> H["Versión nueva: se descarga<br/>en segundo plano y se activa<br/>en la siguiente apertura"]
+```
 
 ## Diseño de la PWA
 
@@ -66,6 +150,18 @@ La PWA solo muestra los datos de la sección *Datos que maneja*. No se piden ni 
 
 - Se usa `HashRouter`: las rutas van después del `#`, así Django solo tiene que servir `index.html`.
 - Si alguien entra a `/#/panel` sin sesión, se le manda a iniciar sesión.
+### Mapa de navegación
+
+```mermaid
+flowchart LR
+    Inicio["Inicio"] --> Ranking["Ranking"]
+    Inicio --> Login["Iniciar sesión"]
+    Inicio --> Registro["Registro"]
+    Ranking --> Login
+    Login --> Panel["Panel<br/>(requiere sesión)"]
+    Registro --> Panel
+    Panel -- "Cerrar sesión" --> Inicio
+```
 
 ### Sesiones
 
@@ -73,12 +169,32 @@ La PWA solo muestra los datos de la sección *Datos que maneja*. No se piden ni 
 - Se usa **el mismo sistema en la PWA y en el juego**: una cuenta creada en un lado sirve en el otro.
 - Para jugar en línea es **obligatorio iniciar sesión**.
 
-### Funcionamiento sin conexión
+### Estructura modular
 
-- La interfaz queda guardada en el dispositivo y abre aunque no haya internet.
-- El ranking muestra datos frescos cuando hay red y, sin red, el último que se consultó.
-- Los datos personales y el inicio de sesión nunca se guardan en caché.
+```
+ui/src/
+├── api/            # cliente.js: todas las llamadas a /api/
+├── auth/           # contexto de sesión (token, jugador, login, registro, logout)
+├── components/     # piezas reutilizables: Navbar, Footer, Hero, Bear, Icons,
+│                   # secciones de Inicio, ProtectedRoute, ui.js (estilos de botones e inputs)
+├── pages/          # una pantalla por archivo: Home, Ranking, Login, Register, Panel
+├── assets/         # logos e imágenes de los osos
+├── index.css       # tokens de diseño (colores, fuentes, sombras, animaciones)
+├── App.jsx         # rutas
+└── main.jsx        # punto de entrada
+```
 
+- **JavaScript modular:** cada pantalla, componente y servicio vive en su propio archivo, y las pantallas solo combinan componentes.
+- **CSS modular:** Tailwind CSS 4 con *tokens* en `index.css`. Los estilos repetidos (botones, inputs) se definen una vez en `components/ui.js`.
+
+### Diseño adaptativo
+
+- **Mobile first:** se diseña primero para celular y se amplía con los puntos de quiebre de Tailwind: `sm` (640 px), `md` (768 px) y `lg` (1024 px).
+- En pantallas chicas el menú se convierte en un **botón de hamburguesa**.
+- Los títulos escalan con el ancho de la pantalla (`clamp`).
+- Las tablas y tarjetas se acomodan en una columna en celular y en varias en escritorio.
+- El contenido tiene un ancho máximo de entre 1024 y 1280 px, centrado.
+- La página nunca genera scroll horizontal.
 ## Guía de estilos
 
 Estilo **neobrutalismo cartoon**: toma del neobrutalismo los bordes gruesos, las sombras duras sin difuminar y los colores planos y saturados, y los suaviza con esquinas redondeadas, tipografía juguetona y animaciones, ambientado en una juguetería de noche. Los osos se muestran en **low poly**.
@@ -142,11 +258,46 @@ Estilo **neobrutalismo cartoon**: toma del neobrutalismo los bordes gruesos, las
 - Todo elemento enfocado con el teclado muestra un contorno `sky` de 4 px.
 - Ancho máximo del contenido: entre 1024 y 1280 px, centrado.
 
-### Tecnología de estilos
 
 - **Tailwind CSS 4**: los colores, fuentes, sombras y animaciones se definen como *tokens* en `ui/src/index.css` (`@theme`).
 - Las clases reutilizables de botones e inputs están en `ui/src/components/ui.js`.
 
+
+```mermaid
+erDiagram
+    JUGADOR ||--o{ PARTICIPACION : "juega"
+    PARTIDA ||--|{ PARTICIPACION : "tiene 2"
+    JUGADOR ||--o{ PARTIDA : "reporta"
+
+    JUGADOR {
+        int id PK
+        string username
+        string password "con hash"
+        int partidas
+        int victorias
+        int derrotas
+        int empates
+        int kills
+        int puntos_totales
+        int mejor_puntuacion
+    }
+    PARTIDA {
+        int id PK
+        string match_id "único"
+        datetime terminada_en
+        bool por_abandono
+        int reportada_por FK
+    }
+    PARTICIPACION {
+        int id PK
+        int partida FK
+        int jugador FK
+        int puntos
+        int kills
+        string resultado "victoria, derrota o empate"
+        bool abandono
+    }
+```
 ## Datos que maneja
 
 **Jugador**
@@ -172,6 +323,26 @@ Estilo **neobrutalismo cartoon**: toma del neobrutalismo los bordes gruesos, las
 - Gana quien tenga más puntos; si quedan iguales, es empate.
 - Quien abandona pierde automáticamente.
 - El juego envía los datos solo al terminar la partida, y cada partida se registra una sola vez.
+
+### Cómo llegan los datos desde el juego
+
+```mermaid
+sequenceDiagram
+    participant A as Jugador A (Unity)
+    participant B as Jugador B (Unity)
+    participant API as API Django
+    participant DB as Supabase
+
+    A->>API: Iniciar sesión
+    B->>API: Iniciar sesión
+    Note over A,B: Partida 1v1 de 10 minutos (Photon)
+    A->>B: Reporte final (mismo para los dos)
+    A->>API: POST /api/partidas/
+    API->>DB: Guarda la partida y suma estadísticas
+    API-->>A: 201 Creada
+    B->>API: POST /api/partidas/ (mismo reporte)
+    API-->>B: 409 Ya registrada
+```
 
 ## Flujo de trabajo y CI/CD
 
