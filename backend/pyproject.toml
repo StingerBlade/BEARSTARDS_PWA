@@ -1,0 +1,9 @@
+[tool.ruff]
+target-version = "py312"
+# Las migraciones las genera Django; no se editan a mano.
+extend-exclude = ["migrations"]
+
+[tool.ruff.lint]
+# Django usa listas en los atributos de clase (Meta.constraints, ordering...);
+# RUF012 marca ese patrón aunque es el estándar del framework.
+ignore = ["RUF012"]
