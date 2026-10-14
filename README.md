@@ -10,7 +10,19 @@
 
 PWA de **Little Bearstards** (Turbo Studios). Presenta el juego, muestra el ranking de jugadores, permite registrarse e iniciar sesión, y recibe desde el juego (Unity) el resultado de cada partida.
 
-> **Estado:** en desarrollo. Este documento describe la propuesta de arquitectura e interfaz; el backend y el despliegue en Render todavía no existen.
+> **Estado:** en desarrollo. Este documento describe la propuesta de arquitectura e interfaz. El backend ya tiene el proyecto Django, los modelos y las tablas creadas en Supabase; faltan los endpoints y el despliegue en Render.
+
+## Documentación por módulo
+
+| Módulo | Qué contiene |
+|---|---|
+| [**Backend** (`backend/`)](backend/README.md) | Puesta en marcha de Django, base de datos y migraciones, API, comandos del CI, base de datos local con Docker y problemas comunes |
+| [**Interfaz** (`ui/`)](ui/README.md) | Puesta en marcha de React + Vite, conexión con el backend en local, estructura, pantallas y reglas para trabajar en el front |
+
+Planeación general del proyecto: [StingerBlade/planeacion_integradora](https://github.com/StingerBlade/planeacion_integradora).
+
+## Arquitectura
+
 ### Diagrama de arquitectura
 
 ```mermaid
@@ -258,10 +270,12 @@ Estilo **neobrutalismo cartoon**: toma del neobrutalismo los bordes gruesos, las
 - Todo elemento enfocado con el teclado muestra un contorno `sky` de 4 px.
 - Ancho máximo del contenido: entre 1024 y 1280 px, centrado.
 
+### Tecnología de estilos
 
 - **Tailwind CSS 4**: los colores, fuentes, sombras y animaciones se definen como *tokens* en `ui/src/index.css` (`@theme`).
 - Las clases reutilizables de botones e inputs están en `ui/src/components/ui.js`.
 
+## Datos que maneja
 
 ```mermaid
 erDiagram
@@ -298,7 +312,6 @@ erDiagram
         bool abandono
     }
 ```
-## Datos que maneja
 
 **Jugador**
 - Usuario y contraseña (la contraseña se guarda con hash, nunca en texto plano).
@@ -344,6 +357,19 @@ sequenceDiagram
     API-->>B: 409 Ya registrada
 ```
 
+## Requisitos del MVP (IDGS101N)
+
+El documento *Requisitos MVP IDGS101N* del docente define cómo se evalúa la integración del juego con la PWA:
+
+| ID | Requisito | Cómo lo cumple la PWA |
+|---|---|---|
+| LB-07 | Publicar el resultado de cada partida en las estadísticas de la PWA, **si la integración está disponible** | `POST /api/partidas/`; el `match_id` único hace que cada partida aparezca **una sola vez** |
+| LB-07 | Si la PWA no está lista o no responde, el juego **conserva el resultado local** | Unity guarda el reporte y lo reintenta después; la API **nunca bloquea** el juego |
+| SRS-LB-05 / RNF-LB-05 | Una desconexión no congela el juego: mensaje claro y regreso al menú | Quien se queda reporta la partida como abandono; el que se desconecta vuelve al menú |
+| Criterio común | Las integraciones externas se hacen después de que el juego complete su ciclo principal | La API se construye del 2 al 13 de noviembre, cuando el núcleo PvP ya está cerrado |
+
+> **Pendiente:** el login es obligatorio para jugar en línea (decisión del 10-oct), pero el documento dice que las cuentas y la API no son condición. Si la API no responde el día de la entrega, el juego debería permitir jugar sin registrar la partida. Detalle en la [planeación](https://github.com/StingerBlade/planeacion_integradora/blob/main/docs/11-requisitos-mvp.md).
+
 ## Flujo de trabajo y CI/CD
 
 ### Ramas
@@ -383,3 +409,4 @@ Corren **siempre** en los PR hacia `main` o `development` y en los push a esas r
 - Render despliega `main` **solo cuando el CI pasa** (`autoDeployTrigger: checksPass`).
 - En cada deploy, `build.sh` compila la PWA, instala el backend, junta los archivos estáticos y aplica las migraciones en Supabase.
 - Los secretos (`DATABASE_URL`, `SECRET_KEY`) viven solo en Render.
+- En Supabase la **Data API está desactivada** (Integrations → Data API): la base de datos solo se usa desde Django.
