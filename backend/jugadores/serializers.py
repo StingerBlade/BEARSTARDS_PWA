@@ -5,6 +5,7 @@ from rest_framework import serializers
 
 from .models import Jugador, Participacion
 
+
 class JugadorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Jugador
@@ -36,6 +37,7 @@ class RegistroSerializer(serializers.ModelSerializer):
         # create_user guarda la contraseña con hash.
         return Jugador.objects.create_user(**validated_data)
 
+
 class ParticipacionSerializer(serializers.ModelSerializer):
     fecha = serializers.DateTimeField(source="partida.terminada_en")
     por_abandono = serializers.BooleanField(source="partida.por_abandono")
@@ -62,11 +64,15 @@ class ReporteSerializer(serializers.Serializer):
         jugadores = data["jugadores"]
         ids = {j["id"] for j in jugadores}
         if len(jugadores) != 2 or len(ids) != 2:
-            raise serializers.ValidationError("Deben venir exactamente 2 jugadores distintos.")
+            raise serializers.ValidationError(
+                "Deben venir exactamente 2 jugadores distintos."
+            )
         if Jugador.objects.filter(id__in=ids).count() != 2:
             raise serializers.ValidationError("Algún jugador no existe.")
         if self.context["request"].user.id not in ids:
-            raise serializers.ValidationError("Solo un jugador de la partida puede reportarla.")
+            raise serializers.ValidationError(
+                "Solo un jugador de la partida puede reportarla."
+            )
 
         resultados = sorted(j["resultado"] for j in jugadores)
         if resultados not in (["derrota", "victoria"], ["empate", "empate"]):
@@ -77,7 +83,11 @@ class ReporteSerializer(serializers.Serializer):
         abandonos = [j for j in jugadores if j["abandono"]]
         if data["por_abandono"]:
             if len(abandonos) != 1 or abandonos[0]["resultado"] != "derrota":
-                raise serializers.ValidationError("En un abandono, quien abandona pierde.")
+                raise serializers.ValidationError(
+                    "En un abandono, quien abandona pierde."
+                )
         elif abandonos:
-            raise serializers.ValidationError("Hay un abandono pero por_abandono es false.")
+            raise serializers.ValidationError(
+                "Hay un abandono pero por_abandono es false."
+            )
         return data
