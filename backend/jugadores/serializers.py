@@ -2,6 +2,7 @@ from django.contrib.auth.password_validation import (
     validate_password as validar_password,
 )
 from rest_framework import serializers
+
 from .models import Jugador, Participacion
 
 class JugadorSerializer(serializers.ModelSerializer):
@@ -14,7 +15,7 @@ class JugadorSerializer(serializers.ModelSerializer):
             "victorias",
             "derrotas",
             "empates",
-            "kills",                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+            "kills",
             "puntos_totales",
             "mejor_puntuacion",
         ]
