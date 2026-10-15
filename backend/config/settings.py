@@ -59,6 +59,7 @@ REST_FRAMEWORK = {
 }
 
 MIDDLEWARE = [
+    "jugadores.middleware.LogPeticionesMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -140,3 +141,21 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Logs: solo por consola. En Render se ven en el panel del servicio (Logs),
+# que los conserva 7 días en un workspace Hobby. El disco de Render se borra
+# en cada deploy o reinicio, así que no se escriben archivos.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "simple": {"format": "{asctime} {levelname} {name} {message}", "style": "{"},
+    },
+    "handlers": {
+        "consola": {"class": "logging.StreamHandler", "formatter": "simple"},
+    },
+    "loggers": {
+        "bearstards": {"handlers": ["consola"], "level": "INFO", "propagate": False},
+        "django.request": {"handlers": ["consola"], "level": "WARNING", "propagate": False},
+    },
+}
