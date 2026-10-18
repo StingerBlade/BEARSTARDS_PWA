@@ -1,122 +1,97 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+// Interfaz mínima para el laboratorio de pruebas: solo muestra y envía datos.
+// El diseño final (neobrutalismo cartoon) la reemplaza más adelante.
+import { useEffect, useState } from 'react'
+import { api } from './api/cliente'
 
-function App() {
-  const [count, setCount] = useState(0)
+const numero = (n) => n.toLocaleString('es-MX')
 
+// Un hook propio para pedir datos
+// Pide `ruta` al montar y cada vez que se llama recargar().
+function useApi(ruta, activa = true) {
+  const [resultado, setResultado] = useState({ estado: 'cargando', datos: null, error: null })
+  const [version, setVersion] = useState(0)
+
+  useEffect(() => {
+    if (!activa) return
+    let vigente = true
+    api(ruta)
+      .then((datos) => {
+        if (!vigente) return
+        console.table(datos)
+        setResultado({ estado: 'listo', datos, error: null })
+      })
+      .catch((error) => {
+        if (vigente) setResultado({ estado: 'error', datos: null, error: error.message })
+      })
+    return () => {
+      vigente = false
+    }
+  }, [ruta, activa, version])
+
+  const recargar = () => {
+    setResultado((r) => ({ ...r, estado: 'cargando' }))
+    setVersion((v) => v + 1)
+  }
+  return { ...resultado, recargar }
+}
+
+// Mensajes de cargando, error y vacío
+
+function Estado({ consulta, vacio }) {
+  if (consulta.estado === 'cargando') return <p>Cargando…</p>
+  if (consulta.estado === 'error') return <p className="text-red-700">Error: {consulta.error}</p>
+  if (!consulta.datos?.length) return <p>{vacio}</p>
+  return null
+}
+
+// La tabla del ranking
+function Ranking({ consulta }) {
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    <section className="space-y-2">
+      <h2 className="text-xl font-bold">Ranking (GET /api/ranking/)</h2>
+      <button type="button" className="border px-2" onClick={consulta.recargar}>
+        Recargar
+      </button>
+      <Estado consulta={consulta} vacio="Todavía no hay jugadores." />
+      {consulta.estado === 'listo' && consulta.datos.length > 0 && (
+        <table className="border-collapse text-left">
+          <thead>
+            <tr>
+              {['#', 'Jugador', 'Puntos', 'Partidas', 'V', 'D', 'E', 'Kills', 'Mejor'].map((h) => (
+                <th key={h} className="border px-2">
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {consulta.datos.map((j, i) => (
+              <tr key={j.id}>
+                <td className="border px-2">{i + 1}</td>
+                <td className="border px-2">{j.username}</td>
+                <td className="border px-2">{numero(j.puntos_totales)}</td>
+                <td className="border px-2">{j.partidas}</td>
+                <td className="border px-2">{j.victorias}</td>
+                <td className="border px-2">{j.derrotas}</td>
+                <td className="border px-2">{j.empates}</td>
+                <td className="border px-2">{j.kills}</td>
+                <td className="border px-2">{numero(j.mejor_puntuacion)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </section>
   )
 }
 
-export default App
+export default function App() {
+  const ranking = useApi('/ranking/')
+
+  return (
+    <main className="mx-auto max-w-4xl space-y-6 p-4">
+      <h1 className="text-2xl font-bold">Little Bearstards — laboratorio de pruebas</h1>
+      <Ranking consulta={ranking} />
+    </main>
+  )
+}
