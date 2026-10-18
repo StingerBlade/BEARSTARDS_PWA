@@ -1,7 +1,7 @@
 // Interfaz mínima para el laboratorio de pruebas: solo muestra y envía datos.
 // El diseño final (neobrutalismo cartoon) la reemplaza más adelante.
 import { useEffect, useState } from 'react'
-import { api } from './api/cliente'
+import { api, guardarSesion, leerSesion } from './api/cliente'
 
 const numero = (n) => n.toLocaleString('es-MX')
 
@@ -85,13 +85,86 @@ function Ranking({ consulta }) {
   )
 }
 
+function FormularioCuenta({ titulo, ruta, onSesion }) {
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [enviando, setEnviando] = useState(false)
+  const [mensaje, setMensaje] = useState(null)
+
+  async function enviar(evento) {
+    evento.preventDefault()
+    setEnviando(true)
+    setMensaje(null)
+    try {
+      const sesion = await api(ruta, { metodo: 'POST', cuerpo: { username, password } })
+      onSesion(sesion)
+      setMensaje(`Listo: sesión iniciada como ${sesion.jugador.username}.`)
+      setPassword('')
+    } catch (error) {
+      setMensaje(`Error: ${error.message}`)
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  return (
+    <form onSubmit={enviar} className="space-y-1 border p-3">
+      <h2 className="text-xl font-bold">
+        {titulo} (POST /api{ruta})
+      </h2>
+      <label className="block">
+        Usuario{' '}
+        <input
+          className="border px-1"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          autoComplete="username"
+          required
+        />
+      </label>
+      <label className="block">
+        Contraseña{' '}
+        <input
+          className="border px-1"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          autoComplete={ruta.includes('registro') ? 'new-password' : 'current-password'}
+          required
+        />
+      </label>
+      <button type="submit" className="border px-2" disabled={enviando}>
+        {enviando ? 'Enviando…' : titulo}
+      </button>
+      {mensaje && <p>{mensaje}</p>}
+    </form>
+  )
+}
+
 export default function App() {
+  const [sesion, setSesion] = useState(leerSesion)
   const ranking = useApi('/ranking/')
+
+  function iniciarSesion(nueva){
+    guardarSesion(nueva)
+    setSesion(nueva)
+    ranking.recargar()
+  }
+
 
   return (
     <main className="mx-auto max-w-4xl space-y-6 p-4">
       <h1 className="text-2xl font-bold">Little Bearstards — laboratorio de pruebas</h1>
+      <p>{sesion ? 'Sesion: ${sesion.jugador.username}' : 'Sin sesion iniciada'}</p>
+
       <Ranking consulta={ranking} />
+
+      <div className='grid gap-4 sm:grid-cols-2'>
+      <FormularioCuenta titulo="Registrarse" ruta="/auth/registro/" onSesion={iniciarSesion} />
+      <FormularioCuenta titulo="Iniciar Sesion" ruta="/auth/login/" onSesion={iniciarSesion} />
+
+      </div>
     </main>
   )
 }
+
