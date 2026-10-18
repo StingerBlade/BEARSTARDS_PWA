@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { api, guardarSesion, leerSesion } from './api/cliente'
 
 const numero = (n) => n.toLocaleString('es-MX')
-
+const fecha = (iso) => new Date(iso).toLocaleString('es-MX')
 // Un hook propio para pedir datos
 // Pide `ruta` al montar y cada vez que se llama recargar().
 function useApi(ruta, activa = true) {
@@ -141,6 +141,61 @@ function FormularioCuenta({ titulo, ruta, onSesion }) {
   )
 }
 
+function Perfil({ onSalir }) {
+  const yo = useApi('/yo/')
+  const partidas = useApi('/yo/partidas/')
+
+  return (
+    <section className="space-y-2 border p-3">
+      <h2 className="text-xl font-bold">Mi perfil (GET /api/yo/ y /api/yo/partidas/)</h2>
+      {yo.estado === 'listo' && (
+        <ul>
+          <li>Jugador: {yo.datos.username}</li>
+          <li>
+            Partidas: {yo.datos.partidas} · Victorias: {yo.datos.victorias} · Derrotas:{' '}
+            {yo.datos.derrotas} · Empates: {yo.datos.empates}
+          </li>
+          <li>
+            Kills: {yo.datos.kills} · Puntos totales: {numero(yo.datos.puntos_totales)} · Mejor
+            puntuación: {numero(yo.datos.mejor_puntuacion)}
+          </li>
+        </ul>
+      )}
+      {yo.estado === 'error' && <p className="text-red-700">Error: {yo.error}</p>}
+
+      <h3 className="font-bold">Historial</h3>
+      <Estado consulta={partidas} vacio="Este jugador todavía no tiene partidas." />
+      {partidas.estado === 'listo' && partidas.datos.length > 0 && (
+        <table className="border-collapse text-left">
+          <thead>
+            <tr>
+              {['Fecha', 'Resultado', 'Puntos', 'Kills', 'Abandono'].map((h) => (
+                <th key={h} className="border px-2">
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {partidas.datos.map((p) => (
+              <tr key={p.fecha + p.resultado}>
+                <td className="border px-2">{fecha(p.fecha)}</td>
+                <td className="border px-2">{p.resultado}</td>
+                <td className="border px-2">{numero(p.puntos)}</td>
+                <td className="border px-2">{p.kills}</td>
+                <td className="border px-2">{p.abandono ? 'Sí' : 'No'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      <button type="button" className="border px-2" onClick={onSalir}>
+        Cerrar sesión (POST /api/auth/logout/)
+      </button>
+    </section>
+  )
+}
+
 export default function App() {
   const [sesion, setSesion] = useState(leerSesion)
   const ranking = useApi('/ranking/')
@@ -151,6 +206,15 @@ export default function App() {
     ranking.recargar()
   }
 
+  async function salir() {
+    try {
+      await api('/auth/logout/', { metodo: 'POST' })
+    } catch (error) {
+      console.warn('[API] logout falló; se cierra la sesión local de todos modos', error)
+    }
+    guardarSesion(null)
+    setSesion(null)
+  }
 
   return (
     <main className="mx-auto max-w-4xl space-y-6 p-4">
@@ -159,11 +223,15 @@ export default function App() {
 
       <Ranking consulta={ranking} />
 
-      <div className='grid gap-4 sm:grid-cols-2'>
-      <FormularioCuenta titulo="Registrarse" ruta="/auth/registro/" onSesion={iniciarSesion} />
-      <FormularioCuenta titulo="Iniciar Sesion" ruta="/auth/login/" onSesion={iniciarSesion} />
+        {sesion ? (
+        <Perfil key={sesion.token} onSalir={salir} />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FormularioCuenta titulo="Registrarse" ruta="/auth/registro/" onSesion={iniciarSesion} />
+          <FormularioCuenta titulo="Iniciar sesión" ruta="/auth/login/" onSesion={iniciarSesion} />
+        </div>
+      )}
 
-      </div>
     </main>
   )
 }
