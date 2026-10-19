@@ -124,9 +124,7 @@ Abre `http://127.0.0.1:8000/api/ranking/`: deben aparecer los 6 jugadores, con `
 
 ## 3. Levantar la PWA
 
-> **Pendiente:** se completa cuando esté lista la interfaz.
-
-En **otra terminal**, desde `ui/`:
+En **otra terminal** (con el backend corriendo), desde `ui/`:
 
 ```bash
 cd ui
@@ -136,11 +134,19 @@ cd ui
 npm ci
 ```
 
+**Para las pruebas del laboratorio usa el build**, porque el service worker (modo offline y cola de sincronización) solo funciona con él:
+
 ```bash
-npm run dev
+npm run build
 ```
 
-Abre `http://localhost:5173`. Vite reenvía las peticiones `/api/...` al backend (`localhost:8000`).
+```bash
+npm run preview
+```
+
+Abre **`http://localhost:4173` en Chrome o Edge**. Firefox no tiene Background Sync y su pestaña de herramientas es distinta. Tanto `npm run preview` como `npm run dev` (puerto 5173, sin service worker) reenvían las peticiones `/api/...` al backend en `localhost:8000`.
+
+> Si después de un cambio no ves la versión nueva, el service worker anterior sigue activo: en **F12 → Application → Service workers** presiona **Unregister** y recarga.
 
 ## 4. Pruebas y evidencias
 
@@ -155,7 +161,8 @@ Guarda cada captura en `evidencias/` con el número de la prueba (por ejemplo `P
 | P5 | Validaciones | Registrar el mismo usuario otra vez, y una contraseña corta | Respuesta 400 con el mensaje de error; no se crea nada | Network y captura de la PWA |
 | P6 | Login y perfil | Iniciar sesión con `oso_rojo` | El perfil muestra sus totales y su historial de 3 partidas | Network de `GET /api/yo/` y `GET /api/yo/partidas/` |
 | P7 | Logs del backend | Revisar la terminal de `runserver` tras P2–P6 | Una línea por petición: método, ruta, código, tiempo, tamaños, memoria y consultas SQL | Captura de la terminal |
-| P8 | Offline | DevTools → Network → *Offline* y recargar | **Pendiente:** se completa con el service worker | Pestaña **Application** (Service Worker y Cache Storage) |
+| P8 | Modo offline | Abrir la PWA una vez con conexión. Luego F12 → Network → **Offline** y recargar | La app abre igual y el ranking muestra la última copia guardada; las respuestas dicen *(ServiceWorker)* | **Application → Manifest**, **Service workers** (`sw.js` activo) y **Cache Storage** (`workbox-precache` y `api-ranking`) |
+| P9 | Sincronización offline/online | Sin sesión, con **Offline**: registrar un usuario. Después volver a **No throttling** | Sin conexión: mensaje *"el registro quedó en cola"* y la petición guardada en IndexedDB. Al reconectar: `POST /api/auth/registro/` → 201, la cola se vacía y el usuario aparece en el ranking y en la base | **Application → IndexedDB → `workbox-background-sync` → `requests`** antes y después, Network con el 201, y `03_consultas.sql` |
 
 Para ejecutar las consultas de verificación:
 
@@ -179,6 +186,19 @@ INFO bearstards.peticiones POST /api/auth/registro/ -> 201 | 812.4 ms | payload 
 | `SQL 4 consultas en 95.1 ms` | Consultas a PostgreSQL y su tiempo total |
 
 El registro tarda más que las consultas porque el hash de la contraseña es lento **a propósito**, para dificultar ataques de fuerza bruta.
+
+### Cómo funciona el modo offline
+
+| Recurso | Estrategia del service worker | Resultado |
+|---|---|---|
+| Interfaz (HTML, JS, CSS e íconos) | *Precache*: se guarda en la primera visita | La app abre sin conexión |
+| `GET /api/ranking/` | *NetworkFirst*: red primero; sin red, la última copia (máximo 7 días) | El ranking se ve sin conexión |
+| `GET /api/yo/` y `/api/yo/partidas/`, login | Sin caché | Los datos personales nunca se guardan en el navegador |
+| `POST /api/auth/registro/` | *Background Sync*: si no hay red, se guarda en IndexedDB (cola `cola-registro`, hasta 24 h) y se reenvía al volver la conexión | El registro no se pierde sin conexión |
+
+Si la cola no se envía sola al reconectar, se puede forzar en **Application → Service workers → Sync** con la etiqueta `workbox-background-sync:cola-registro`.
+
+> **Nota de seguridad:** mientras un registro espera en la cola, su contenido (incluida la contraseña) queda guardado en IndexedDB del navegador hasta que se envía. Por eso solo el registro usa la cola; el inicio de sesión nunca se guarda.
 
 ## 5. Repetir las pruebas desde cero
 
