@@ -11,6 +11,13 @@ function useApi(ruta, activa = true) {
   const [resultado, setResultado] = useState({ estado: 'cargando', datos: null, error: null })
   const [version, setVersion] = useState(0)
 
+  // Al volver la conexión, vuelve a pedir los datos.
+  useEffect(() => {
+    const alVolver = () => setVersion((v) => v + 1)
+    window.addEventListener('online', alVolver)
+    return () => window.removeEventListener('online', alVolver)
+  }, [])
+
   useEffect(() => {
     if (!activa) return
     let vigente = true
@@ -101,7 +108,15 @@ function FormularioCuenta({ titulo, ruta, onSesion }) {
       setMensaje(`Listo: sesión iniciada como ${sesion.jugador.username}.`)
       setPassword('')
     } catch (error) {
-      setMensaje(`Error: ${error.message}`)
+      if(error.status === 0 && ruta.includes('registro')){
+        setMensaje(
+          'Sin conexion: el registro quedo en cola y se enviara solo al volver la conexion. Despues inicia sesion. '
+        )
+      }else
+      {
+        setMensaje(`Error: ${error.message}`)
+      }
+      
     } finally {
       setEnviando(false)
     }
@@ -219,7 +234,7 @@ export default function App() {
   return (
     <main className="mx-auto max-w-4xl space-y-6 p-4">
       <h1 className="text-2xl font-bold">Little Bearstards — laboratorio de pruebas</h1>
-      <p>{sesion ? 'Sesion: ${sesion.jugador.username}' : 'Sin sesion iniciada'}</p>
+            <p>{sesion ? `Sesión: ${sesion.jugador.username}` : 'Sin sesión iniciada'}</p>
 
       <Ranking consulta={ranking} />
 

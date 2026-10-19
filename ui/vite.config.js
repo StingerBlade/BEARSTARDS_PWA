@@ -6,7 +6,6 @@ import { VitePWA } from 'vite-plugin-pwa'
 const proxy = { '/api': 'http://localhost:8000' }
 
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
@@ -42,7 +41,19 @@ export default defineConfig({
               cacheableResponse: { statuses: [200] },
             },
           },
+          {
+            urlPattern: ({ url }) => url.pathname === '/api/auth/registro/',
+            method: 'POST',
+            handler: 'NetworkOnly',
+            options: {
+              backgroundSync: {
+                name: 'cola-registro',
+                options: { maxRetentionTime: 24 * 60 },
+              },
+            },
+          },
         ],
+        
       },
     }),
   ],
