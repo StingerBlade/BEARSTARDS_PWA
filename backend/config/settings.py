@@ -61,6 +61,7 @@ REST_FRAMEWORK = {
 MIDDLEWARE = [
     "jugadores.middleware.LogPeticionesMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -136,6 +137,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# WhiteNoise sirve el build de la PWA (ui/dist) en la raíz del sitio:
+# "/" devuelve index.html y también sw.js, manifest.webmanifest y los íconos.
+WHITENOISE_ROOT = BASE_DIR.parent / "ui" / "dist"
+WHITENOISE_INDEX_FILE = True
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
