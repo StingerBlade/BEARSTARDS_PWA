@@ -2,7 +2,7 @@
 # Django sirve la API (/api/...) y tambien el build de Vite (ui/dist) con WhiteNoise.
 #
 # IMPORTANTE: este blueprint asume que existe backend/ con un proyecto Django
-# llamado "config" (backend/config/wsgi.py). Si G. Gonzalez usa otro nombre,
+# llamado "config" (backend/config/wsgi.py). 
 # cambiar `config.wsgi` en startCommand.
 services:
   - type: web
