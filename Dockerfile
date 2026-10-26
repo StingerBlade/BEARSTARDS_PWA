@@ -27,4 +27,4 @@ USER bearstards
 
 EXPOSE 8000
 # Al arrancar: crear/actualizar tablas y levantar el servidor
-CMD ["sh", "-c", "python manage.py migrate --no-input && gunicorn config.wsgi:application --bind 0.0.0.0:8000"]
+CMD ["sh", "-c", "python manage.py migrate --no-input && gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000}"]

@@ -255,6 +255,22 @@ BEGIN;
 -- (no-op)
 COMMIT;
 
+-- ---------- jugadores.0002_puntos_pueden_ser_negativos ----------
+BEGIN;
+--
+-- Alter field mejor_puntuacion on jugador
+--
+ALTER TABLE "jugador" DROP CONSTRAINT "jugador_mejor_puntuacion_check";
+--
+-- Alter field puntos_totales on jugador
+--
+ALTER TABLE "jugador" DROP CONSTRAINT "jugador_puntos_totales_check";
+--
+-- Alter field puntos on participacion
+--
+ALTER TABLE "participacion" DROP CONSTRAINT "participacion_puntos_check";
+COMMIT;
+
 -- ---------- sessions.0001_initial ----------
 BEGIN;
 --
@@ -296,4 +312,5 @@ INSERT INTO django_migrations (app, name, applied) VALUES
     ('authtoken', '0002_auto_20160226_1747', now()),
     ('authtoken', '0003_tokenproxy', now()),
     ('authtoken', '0004_alter_tokenproxy_options', now()),
+    ('jugadores', '0002_puntos_pueden_ser_negativos', now()),
     ('sessions', '0001_initial', now());

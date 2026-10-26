@@ -1,31 +1,29 @@
 # Blueprint de Render: un solo Web Service (plan Starter, $7/mes).
 # Django sirve la API (/api/...) y tambien el build de Vite (ui/dist) con WhiteNoise.
 #
+# IMPORTANTE: Render construye el Dockerfile de la raíz. Si cambia el nombre
+# del proyecto Django ("config"), cambiar `config.wsgi` en el CMD del Dockerfile.
 # IMPORTANTE: este blueprint asume que existe backend/ con un proyecto Django
 # llamado "config" (backend/config/wsgi.py). 
 # cambiar `config.wsgi` en startCommand.
 services:
   - type: web
     name: bearstards
-    runtime: python
+    runtime: docker
     plan: starter
-    buildCommand: bash build.sh
-    startCommand: cd backend && gunicorn config.wsgi:application
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     # Solo se despliega cuando el CI de GitHub Actions pasa en verde
     autoDeployTrigger: checksPass
     branch: main
     healthCheckPath: /api/health/
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.12.7
-      - key: NODE_VERSION
-        value: 22.12.0
       - key: DEBUG
         value: "False"
       - key: SECRET_KEY
         generateValue: true
-      # Cadena de conexion de Supabase (Settings > Database > Connection pooling).
-      # sync:false = se captura a mano en el dashboard de Render, nunca en el repo.
+    # Cadena de conexion de Supabase (Connect > Session pooler > URI).
+    # sync:false = se captura a mano en el dashboard de Render, nunca en el repo.
       - key: DATABASE_URL
         sync: false
       - key: ALLOWED_HOSTS
