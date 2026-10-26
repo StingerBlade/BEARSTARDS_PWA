@@ -8,8 +8,8 @@ class Jugador(AbstractUser):
     derrotas = models.PositiveIntegerField(default=0)
     empates = models.PositiveIntegerField(default=0)
     kills = models.PositiveIntegerField(default=0)
-    puntos_totales = models.PositiveIntegerField(default=0)
-    mejor_puntuacion = models.PositiveIntegerField(default=0)
+    puntos_totales = models.IntegerField(default=0)
+    mejor_puntuacion = models.IntegerField(default=0)
 
     class Meta:
         db_table = "jugador"
@@ -39,7 +39,7 @@ class Participacion(models.Model):
     jugador = models.ForeignKey(
         Jugador, on_delete=models.PROTECT, related_name="participaciones"
     )
-    puntos = models.PositiveIntegerField()
+    puntos = models.IntegerField()
     kills = models.PositiveIntegerField()
     resultado = models.CharField(max_length=8, choices=Resultado.choices)
     abandono = models.BooleanField(default=False)

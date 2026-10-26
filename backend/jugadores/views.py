@@ -3,7 +3,7 @@ import logging
 
 from django.contrib.auth import authenticate
 from django.db import IntegrityError, transaction
-from django.db.models import F, Value
+from django.db.models import Case, F, Value, When
 from django.db.models.functions import Greatest
 from rest_framework import status
 from rest_framework.authtoken.models import Token
@@ -112,8 +112,11 @@ def reportar_partida(request):
                     **{contador: F(contador) + 1},
                     kills=F("kills") + j["kills"],
                     puntos_totales=F("puntos_totales") + j["puntos"],
-                    mejor_puntuacion=Greatest(
-                        F("mejor_puntuacion"), Value(j["puntos"])
+                    # En la primera partida se toma su puntaje aunque sea
+                    # negativo; el 0 inicial no es una puntuación real.
+                    mejor_puntuacion=Case(
+                        When(partidas=0, then=Value(j["puntos"])),
+                        default=Greatest(F("mejor_puntuacion"), Value(j["puntos"])),
                     ),
                 )
     except IntegrityError:  # match_id repetido: el otro cliente ya la reportó

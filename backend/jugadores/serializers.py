@@ -49,7 +49,7 @@ class ParticipacionSerializer(serializers.ModelSerializer):
 
 class ParticipanteSerializer(serializers.Serializer):
     id = serializers.IntegerField()
-    puntos = serializers.IntegerField(min_value=0)
+    puntos = serializers.IntegerField()
     kills = serializers.IntegerField(min_value=0)
     resultado = serializers.ChoiceField(choices=Participacion.Resultado.choices)
     abandono = serializers.BooleanField(default=False)

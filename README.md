@@ -335,6 +335,7 @@ erDiagram
 
 - Todas las partidas duran 10 minutos.
 - Gana quien tenga más puntos; si quedan iguales, es empate.
+- Los puntos de una partida pueden ser 0 o negativos: golpear a un NPC resta 50. Por eso los puntos totales y la mejor puntuación también pueden ser negativos.
 - Quien abandona pierde automáticamente.
 - El juego envía los datos solo al terminar la partida, y cada partida se registra una sola vez.
 
@@ -369,7 +370,7 @@ El documento *Requisitos MVP IDGS101N* del docente define cómo se evalúa la in
 | SRS-LB-05 / RNF-LB-05 | Una desconexión no congela el juego: mensaje claro y regreso al menú | Quien se queda reporta la partida como abandono; el que se desconecta vuelve al menú |
 | Criterio común | Las integraciones externas se hacen después de que el juego complete su ciclo principal | La API se construye del 2 al 13 de noviembre, cuando el núcleo PvP ya está cerrado |
 
-> **Pendiente:** el login es obligatorio para jugar en línea (decisión del 10-oct), pero el documento dice que las cuentas y la API no son condición. Si la API no responde el día de la entrega, el juego debería permitir jugar sin registrar la partida. Detalle en la [planeación](https://github.com/StingerBlade/planeacion_integradora/blob/main/docs/11-requisitos-mvp.md).
+> **Decisión:** el login es obligatorio para jugar en línea (decidido el 10-oct y confirmado el 26-oct), aunque el documento del docente no pone las cuentas como condición. Si la API no responde, el juego conserva el reporte de la partida y lo reintenta después (LB-07).
 
 ## Flujo de trabajo y CI/CD
 
@@ -401,6 +402,7 @@ Corren **siempre** en los PR hacia `main` o `development` y en los push a esas r
 |---|---|
 | `Frontend CI / lint-and-build` | En `ui/`: `npm ci`, `npm run lint` y `npm run build` con Node 22. Guarda el build como artefacto por 7 días. |
 | `Backend CI / lint-and-test` | En `backend/`: `ruff check`, que no falten migraciones (`makemigrations --check`) y `manage.py test`, contra un PostgreSQL temporal. Mientras no exista `backend/manage.py`, termina en verde sin hacer nada. |
+| `Docker CI / build-and-smoke-test` | Construye la imagen con el `Dockerfile`, la arranca como en Render (`PORT=10000`) contra un PostgreSQL temporal y revisa que respondan `/api/health/` y la PWA. |
 
 - El CI **nunca se conecta a Supabase**: usa su propia base de datos desechable, así que los tests no tocan datos reales.
 - Si llega otro push a la misma rama, se cancela la corrida anterior.
@@ -408,6 +410,6 @@ Corren **siempre** en los PR hacia `main` o `development` y en los push a esas r
 ### Despliegue (CD)
 
 - Render despliega `main` **solo cuando el CI pasa** (`autoDeployTrigger: checksPass`).
-- En cada deploy, `build.sh` compila la PWA, instala el backend, junta los archivos estáticos y aplica las migraciones en Supabase.
+- En cada deploy, Render construye el `Dockerfile` (compila la PWA, instala el backend y junta los estáticos) y, al arrancar el contenedor, aplica las migraciones en Supabase.
 - Los secretos (`DATABASE_URL`, `SECRET_KEY`) viven solo en Render.
 - En Supabase la **Data API está desactivada** (Integrations → Data API): la base de datos solo se usa desde Django.

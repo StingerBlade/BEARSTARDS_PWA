@@ -123,6 +123,32 @@ class ReportarPartidaTests(APITestCase):
         )
         self.assertEqual(r.status_code, 400)
 
+    def test_acepta_puntos_cero_y_negativos(self):
+        jugadores = [
+            {"id": self.a.id, "puntos": 0, "kills": 0, "resultado": "victoria"},
+            {"id": self.b.id, "puntos": -100, "kills": 0, "resultado": "derrota"},
+        ]
+        r = self.client.post(
+            "/api/partidas/", self.reporte(jugadores=jugadores), format="json"
+        )
+        self.assertEqual(r.status_code, 201)
+        self.b.refresh_from_db()
+        self.assertEqual((self.b.puntos_totales, self.b.mejor_puntuacion), (-100, -100))
+
+    def test_mejor_puntuacion_no_baja_con_una_partida_negativa(self):
+        self.client.post("/api/partidas/", self.reporte(), format="json")
+        jugadores = [
+            {"id": self.a.id, "puntos": -50, "kills": 0, "resultado": "derrota"},
+            {"id": self.b.id, "puntos": 200, "kills": 1, "resultado": "victoria"},
+        ]
+        self.client.post(
+            "/api/partidas/",
+            self.reporte(match_id="sala-1-1731000900", jugadores=jugadores),
+            format="json",
+        )
+        self.a.refresh_from_db()
+        self.assertEqual((self.a.puntos_totales, self.a.mejor_puntuacion), (900, 950))
+        
     def test_mis_partidas_devuelve_historial(self):
         self.client.post("/api/partidas/", self.reporte(), format="json")
         r = self.client.get("/api/yo/partidas/")
