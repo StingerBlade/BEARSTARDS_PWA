@@ -402,7 +402,7 @@ Corren **siempre** en los PR hacia `main` o `development` y en los push a esas r
 |---|---|
 | `Frontend CI / lint-and-build` | En `ui/`: `npm ci`, `npm run lint` y `npm run build` con Node 22. Guarda el build como artefacto por 7 días. |
 | `Backend CI / lint-and-test` | En `backend/`: `ruff check`, que no falten migraciones (`makemigrations --check`) y `manage.py test`, contra un PostgreSQL temporal. Mientras no exista `backend/manage.py`, termina en verde sin hacer nada. |
-
+| `Docker CI / build-and-smoke-test` | Construye la imagen con el `Dockerfile`, la arranca como en Render (`PORT=10000`) contra un PostgreSQL temporal y revisa que respondan `/api/health/` y la PWA. |
 - El CI **nunca se conecta a Supabase**: usa su propia base de datos desechable, así que los tests no tocan datos reales.
 - Si llega otro push a la misma rama, se cancela la corrida anterior.
 
