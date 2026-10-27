@@ -5,12 +5,16 @@ import Header from './components/Header'
 import Pendiente from './components/Pendiente'
 import Home from './pages/Home'
 import Laboratorio from './pages/Laboratorio'
+import Login from './pages/Login'
 import Ranking from './pages/Ranking'
+import Registro from './pages/Registro'
 // Al cambiar de pantalla se empieza arriba
 function AlInicio() {
   const { pathname } = useLocation()
-  useEffect(() => window.scrollTo(0, 0), [pathname])
-  return null
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
+    return null
 }
 
 function Layout() {
@@ -43,8 +47,8 @@ export default function App() {
         <Route element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="ranking" element={<Ranking />} />
-          <Route path="login" element={<Pendiente titulo="Iniciar sesión" />} />
-          <Route path="registro" element={<Pendiente titulo="Crear cuenta" />} />
+          <Route path="login" element={<Login />} />
+          <Route path="registro" element={<Registro />} />
           <Route path="panel" element={<Pendiente titulo="Mi panel" />} />
           <Route path="laboratorio" element={<Laboratorio />} />
           <Route path="*" element={<Pendiente titulo="Página no encontrada" />} />
