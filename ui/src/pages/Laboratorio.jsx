@@ -232,8 +232,9 @@ export default function Laboratorio() {
   }
 
   return (
-    <main className="mx-auto min-h-svh max-w-4xl space-y-6 bg-paper p-4 pt-28 text-ink">
-      <h1 className="text-2xl font-bold">Little Bearstards — laboratorio de pruebas</h1>
+    <div className="min-h-svh bg-night px-4 pt-28 pb-16">
+      <div className="mx-auto max-w-4xl space-y-6 rounded-2xl bg-paper p-4 text-ink">    
+          <h1 className="text-2xl font-bold">Little Bearstards — laboratorio de pruebas</h1>
             <p>{sesion ? `Sesión: ${sesion.jugador.username}` : 'Sin sesión iniciada'}</p>
 
       <Ranking consulta={ranking} />
@@ -246,8 +247,10 @@ export default function Laboratorio() {
           <FormularioCuenta titulo="Iniciar sesión" ruta="/auth/login/" onSesion={iniciarSesion} />
         </div>
       )}
+        </div>
+        </div>
 
-    </main>
+    
   )
 }
 
