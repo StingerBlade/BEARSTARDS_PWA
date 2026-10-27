@@ -5,7 +5,7 @@ import Header from './components/Header'
 import Pendiente from './components/Pendiente'
 import Home from './pages/Home'
 import Laboratorio from './pages/Laboratorio'
-
+import Ranking from './pages/Ranking'
 // Al cambiar de pantalla se empieza arriba
 function AlInicio() {
   const { pathname } = useLocation()
@@ -42,7 +42,7 @@ export default function App() {
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<Home />} />
-          <Route path="ranking" element={<Pendiente titulo="Ranking" />} />
+          <Route path="ranking" element={<Ranking />} />
           <Route path="login" element={<Pendiente titulo="Iniciar sesión" />} />
           <Route path="registro" element={<Pendiente titulo="Crear cuenta" />} />
           <Route path="panel" element={<Pendiente titulo="Mi panel" />} />
