@@ -1,5 +1,5 @@
 import sinResultados from '../../assets/img/empty-state-search.webp'
-import { numero } from '../../datos/ejemplo'
+import { numero } from '../../datos/formato'
 
 // En celular se ocultan V/D/E/Kills y se muestran en una línea bajo el nombre
 const opcional = 'hidden px-3 py-3 text-right sm:table-cell'
