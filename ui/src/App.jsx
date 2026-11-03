@@ -6,6 +6,7 @@ import Pendiente from './components/Pendiente'
 import Home from './pages/Home'
 import Laboratorio from './pages/Laboratorio'
 import Login from './pages/Login'
+import Panel from './pages/Panel'
 import Ranking from './pages/Ranking'
 import Registro from './pages/Registro'
 // Al cambiar de pantalla se empieza arriba
@@ -49,7 +50,7 @@ export default function App() {
           <Route path="ranking" element={<Ranking />} />
           <Route path="login" element={<Login />} />
           <Route path="registro" element={<Registro />} />
-          <Route path="panel" element={<Pendiente titulo="Mi panel" />} />
+          <Route path="panel" element={<Panel />} />
           <Route path="laboratorio" element={<Laboratorio />} />
           <Route path="*" element={<Pendiente titulo="Página no encontrada" />} />
         </Route>

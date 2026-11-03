@@ -1,7 +1,7 @@
 import medalla1 from '../../assets/svg/medalla-1.svg'
 import medalla2 from '../../assets/svg/medalla-2.svg'
 import medalla3 from '../../assets/svg/medalla-3.svg'
-import { numero } from '../../datos/ejemplo'
+import { numero } from '../../datos/formato'
 import Oso from '../Oso'
 import Reveal from '../Reveal'
 
