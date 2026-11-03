@@ -24,10 +24,18 @@ class JugadorSerializer(serializers.ModelSerializer):
 
 class RegistroSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
+    # Opcional para no romper clientes viejos; sin correo no hay bienvenida.
+    email = serializers.EmailField(required=False, allow_blank=True)
 
     class Meta:
         model = Jugador
-        fields = ["username", "password"]
+        fields = ["username", "email", "password"]
+
+    def validate_email(self, value):
+        value = value.strip().lower()
+        if value and Jugador.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError("Ese correo ya tiene una cuenta.")
+        return value
 
     def validate_password(self, value):
         validar_password(value)

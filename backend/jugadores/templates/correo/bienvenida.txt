@@ -1,0 +1,16 @@
+¡Hola, {{ jugador.username }}!
+
+Ya eres uno de los últimos osos de peluche sin vender. Cuando se apaguen las luces de la juguetería, despertarás junto a docenas de osos idénticos… y uno de ellos es tu rival.
+
+Solo hay lugar para uno: el ganador se vende y el perdedor va al incinerador.
+
+- Mézclate: correr o portar un arma te delata.
+- Fase 2: llega la pistola de dardos, puntos x2.
+- Recósete: cada rollo de hilo cura 25 de vida.
+
+Ver el ranking: {{ sitio }}/#/ranking
+
+La tienda cierra el 20 de noviembre. Primera versión jugable: 13 de noviembre de 2026.
+
+Recibes este correo porque creaste la cuenta {{ jugador.username }} en littlebearstards.com. Si no fuiste tú, ignóralo.
+Turbo Studios

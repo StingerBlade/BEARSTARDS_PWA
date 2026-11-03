@@ -8,7 +8,7 @@ from django.db import connection
 
 logger = logging.getLogger("bearstards.peticiones")
 
-CAMPOS_OCULTOS = {"password"}
+CAMPOS_OCULTOS = {"password", "email"}
 # Render consulta /api/health/ cada pocos segundos; registrarla solo llenaría los logs.
 RUTAS_SIN_LOG = {"/api/health/"}
 

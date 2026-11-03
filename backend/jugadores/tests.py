@@ -1,4 +1,7 @@
 # Create your tests here.
+from unittest import mock
+
+from django.core import mail
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
@@ -48,6 +51,56 @@ class RegistroLoginTests(APITestCase):
 
 
 # RANKING
+
+
+class CorreoBienvenidaTests(APITestCase):
+    def registrar(self, **extra):
+        datos = {"username": "oso_correo", "password": "Peluche-Seguro-1", **extra}
+        return self.client.post("/api/auth/registro/", datos, format="json")
+
+    def test_con_correo_manda_bienvenida_con_imagenes(self):
+        r = self.registrar(email="Oso@Ejemplo.com")
+        self.assertEqual(r.status_code, 201)
+        self.assertEqual(
+            Jugador.objects.get(username="oso_correo").email, "oso@ejemplo.com"
+        )
+        self.assertEqual(len(mail.outbox), 1)
+        correo = mail.outbox[0]
+        self.assertEqual(correo.to, ["oso@ejemplo.com"])
+        self.assertIn("oso_correo", correo.subject)
+        html = correo.alternatives[0][0]
+        self.assertIn("¡Hola, oso_correo!", html)
+        # Cada cid: del HTML tiene su imagen adjunta
+        adjuntas = {a["Content-ID"].strip("<>") for a in correo.attachments}
+        for cid in (
+            "bear-player",
+            "weapon-sewing-needle",
+            "weapon-dart-blaster-v2",
+            "item-thread-spool",
+        ):
+            self.assertIn(f"cid:{cid}", html)
+            self.assertIn(cid, adjuntas)
+
+    def test_sin_correo_no_manda_nada(self):
+        self.assertEqual(self.registrar().status_code, 201)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_correo_repetido_da_400(self):
+        Jugador.objects.create_user(
+            "oso_rojo", email="oso@ejemplo.com", password="Peluche-Seguro-1"
+        )
+        r = self.registrar(email="OSO@ejemplo.com")
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("email", r.data)
+
+    def test_si_falla_el_envio_el_registro_sigue(self):
+        with mock.patch(
+            "django.core.mail.EmailMultiAlternatives.send",
+            side_effect=OSError("sin red"),
+        ):
+            r = self.registrar(email="oso@ejemplo.com")
+        self.assertEqual(r.status_code, 201)
+        self.assertTrue(Jugador.objects.filter(username="oso_correo").exists())
 
 
 class RankingTests(APITestCase):
@@ -148,7 +201,7 @@ class ReportarPartidaTests(APITestCase):
         )
         self.a.refresh_from_db()
         self.assertEqual((self.a.puntos_totales, self.a.mejor_puntuacion), (900, 950))
-        
+
     def test_mis_partidas_devuelve_historial(self):
         self.client.post("/api/partidas/", self.reporte(), format="json")
         r = self.client.get("/api/yo/partidas/")
