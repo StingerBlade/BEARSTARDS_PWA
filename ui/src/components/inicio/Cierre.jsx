@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import oso from '../../assets/svg/oso.svg'
+import oso from '../../assets/img/bear-player.webp'
 import Reveal from '../Reveal'
 import { boton } from '../ui'
 

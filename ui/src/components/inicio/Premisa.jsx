@@ -1,5 +1,5 @@
-import aguja from '../../assets/svg/icono-aguja.svg'
-import buscar from '../../assets/svg/icono-buscar.svg'
+import armas from '../../assets/img/icon-category-weapons.webp'
+import buscar from '../../assets/img/icon-nav-search.webp'
 import control from '../../assets/svg/icono-control.svg'
 import trofeo from '../../assets/svg/icono-trofeo.svg'
 import Reveal from '../Reveal'
@@ -21,7 +21,7 @@ const TARJETAS = [
     texto: 'Dos jugadores, cada uno en su computadora. Partidas de 10 minutos con reaparición: gana quien junte más puntos.',
   },
   {
-    icono: aguja,
+    icono: armas,
     color: 'bg-mint',
     r: -1,
     titulo: 'Aguja y pistola de dardos',
@@ -66,7 +66,7 @@ export default function Premisa() {
               className={`toon rounded-3xl p-6 text-ink transition-transform hover:-translate-y-2 hover:rotate-0 ${t.color}`}
             >
               <span className="mb-4 grid size-16 place-items-center rounded-2xl border-[3px] border-ink bg-paper shadow-toon-sm">
-                <img src={t.icono} alt="" className="size-11" />
+                <img src={t.icono} alt="" className="size-11 object-contain" />
               </span>
               <h3 className="mb-2 text-2xl">{t.titulo}</h3>
               <p className="text-[0.97rem] leading-snug font-medium">{t.texto}</p>
