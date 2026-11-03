@@ -1,10 +1,12 @@
 import { useId, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { api, guardarSesion } from '../../api/cliente'
 import { boton, etiqueta, input } from '../ui'
 import { Alerta, Ojo, Reloj, SinWifi } from './iconos'
 
 const USUARIO_VALIDO = /^[\wÁÉÍÓÚáéíóúÑñ.@+-]{3,30}$/
 const CORREO_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const CAMPOS = ['username', 'email', 'password']
 
 function validar({ username, email, password }, registro) {
   const e = {}
@@ -33,8 +35,16 @@ function ErrorCampo({ id, mensaje }) {
   )
 }
 
-// Formulario de Login (`tipo="login"`) y Registro (`tipo="registro"`).
-// Por ahora solo simula el envío; al conectar la API se llama a /auth/login/ o /auth/registro/.
+// Errores por campo que devuelve el registro: { username: ['...'], email: [...] }
+function erroresDelServidor(datos) {
+  const e = {}
+  for (const campo of CAMPOS) {
+    if (datos?.[campo]) e[campo] = [].concat(datos[campo]).join(' ')
+  }
+  return e
+}
+
+// Formulario de Login (`tipo="login"`) y Registro (`tipo="registro"`): llama a /auth/login/ o /auth/registro/.
 export default function FormularioCuenta({ tipo }) {
   const registro = tipo === 'registro'
   const id = useId()
@@ -45,9 +55,8 @@ export default function FormularioCuenta({ tipo }) {
   const [errores, setErrores] = useState({})
   const [verPass, setVerPass] = useState(false)
   const [enviando, setEnviando] = useState(false)
+  // { tipo: 'cola' | 'sin-red' | 'error', texto }
   const [aviso, setAviso] = useState(null)
-  // Temporal: permite ver el aviso de "sin conexión" mientras no hay API
-  const [sinConexion, setSinConexion] = useState(false)
 
   const ids = { username: `${id}-usuario`, email: `${id}-correo`, password: `${id}-pass` }
 
@@ -62,25 +71,39 @@ export default function FormularioCuenta({ tipo }) {
     if (e.target.value) setErrores((prev) => ({ ...prev, [e.target.name]: validar(valores, registro)[e.target.name] }))
   }
 
-  function entrar() {
-    navigate('/panel')
+  function mostrarErrores(nuevos) {
+    setErrores(nuevos)
+    requestAnimationFrame(() => resumen.current?.focus())
   }
 
-  function enviar(e) {
+  async function enviar(e) {
     e.preventDefault()
     setAviso(null)
     const nuevos = validar(valores, registro)
-    setErrores(nuevos)
-    if (Object.keys(nuevos).length) {
-      requestAnimationFrame(() => resumen.current?.focus())
-      return
-    }
+    if (Object.keys(nuevos).length) return mostrarErrores(nuevos)
+    setErrores({})
+
+    const username = valores.username.trim()
+    const cuerpo = registro
+      ? { username, email: valores.email.trim(), password: valores.password }
+      : { username, password: valores.password }
+
     setEnviando(true)
-    setTimeout(() => {
+    try {
+      const sesion = await api(registro ? '/auth/registro/' : '/auth/login/', { metodo: 'POST', cuerpo })
+      guardarSesion(sesion)
+      navigate('/panel')
+    } catch (error) {
+      // Sin red el service worker deja el registro en cola y lo manda al volver la conexión
+      if (error.status === 0) setAviso({ tipo: registro ? 'cola' : 'sin-red' })
+      else {
+        const delServidor = erroresDelServidor(error.datos)
+        if (Object.keys(delServidor).length) mostrarErrores(delServidor)
+        else setAviso({ tipo: 'error', texto: error.message })
+      }
+    } finally {
       setEnviando(false)
-      if (sinConexion) setAviso(registro ? 'cola' : 'sin-red')
-      else entrar()
-    }, 600)
+    }
   }
 
   const lista = Object.entries(errores).filter(([, m]) => m)
@@ -110,10 +133,16 @@ export default function FormularioCuenta({ tipo }) {
       )}
 
       <div role="status">
-        {aviso && (
+        {aviso?.tipo === 'error' && (
+          <div className="mb-5 flex items-start gap-3 rounded-2xl border-[3px] border-[#b3122a] bg-[#ffe1e6] px-4 py-3.5 font-semibold">
+            <Alerta />
+            <p>{aviso.texto}</p>
+          </div>
+        )}
+        {(aviso?.tipo === 'cola' || aviso?.tipo === 'sin-red') && (
           <div className="mb-5 flex items-start gap-3 rounded-2xl border-[3px] border-ink bg-sun px-4 py-3.5 font-medium">
-            {aviso === 'cola' ? <Reloj /> : <SinWifi />}
-            {aviso === 'cola' ? (
+            {aviso.tipo === 'cola' ? <Reloj /> : <SinWifi />}
+            {aviso.tipo === 'cola' ? (
               <p>
                 <strong>Tu registro quedó en cola.</strong>
                 <br />
@@ -214,19 +243,9 @@ export default function FormularioCuenta({ tipo }) {
         <ErrorCampo id={`${ids.password}-err`} mensaje={errores.password} />
       </div>
 
-      <label className="mb-5 flex cursor-pointer items-center gap-2 text-sm font-semibold text-ink/70">
-        <input type="checkbox" checked={sinConexion} onChange={(e) => setSinConexion(e.target.checked)} className="size-4 accent-ink" />
-        Simular que no hay conexión
-      </label>
-
       <button type="submit" disabled={enviando} className={boton('sun', 'w-full')}>
         {enviando ? 'Enviando…' : registro ? 'Crear cuenta' : 'Entrar'}
       </button>
-      {!registro && (
-        <button type="button" onClick={entrar} className={boton('sky', 'mt-3 w-full px-5 py-2 text-base')}>
-          Probar con la cuenta demo
-        </button>
-      )}
     </form>
   )
 }
