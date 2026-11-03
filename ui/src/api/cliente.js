@@ -3,6 +3,8 @@
 
 // Guardar y leer la sesión
 const CLAVE_SESION = 'bearstards:sesion'
+// Se dispara al guardar o borrar la sesión para que el header se actualice
+export const EVENTO_SESION = 'bearstards:sesion'
 
 export function leerSesion() {
   try {
@@ -19,6 +21,7 @@ export function guardarSesion(sesion) {
   } catch {
     // por si tiene el modo incognito y no permite guardar cache
   }
+  window.dispatchEvent(new Event(EVENTO_SESION))
 }
 
 
@@ -35,6 +38,7 @@ export class ErrorApi extends Error {
   constructor(status, datos) {
     super(mensajeDeError(datos) || `Error ${status}`)
     this.status = status
+    this.datos = datos
   }
 }
 
@@ -73,4 +77,14 @@ export async function api(ruta, { metodo = 'GET', cuerpo } = {}) {
   if (respuesta.status === 401) guardarSesion(null)
   if (!respuesta.ok) throw new ErrorApi(respuesta.status, datos)
   return datos
+}
+
+// Avisa al servidor para borrar el token; la sesión local se cierra aunque falle
+export async function cerrarSesion() {
+  try {
+    await api('/auth/logout/', { metodo: 'POST' })
+  } catch (error) {
+    console.warn('[API] logout falló; se cierra la sesión local de todos modos', error)
+  }
+  guardarSesion(null)
 }
