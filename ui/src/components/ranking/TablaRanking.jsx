@@ -1,3 +1,4 @@
+import sinResultados from '../../assets/img/empty-state-search.webp'
 import { numero } from '../../datos/ejemplo'
 
 // En celular se ocultan V/D/E/Kills y se muestran en una línea bajo el nombre
@@ -5,7 +6,12 @@ const opcional = 'hidden px-3 py-3 text-right sm:table-cell'
 
 export default function TablaRanking({ filas, usuario, busqueda }) {
   if (!filas.length) {
-    return <p className="p-8 text-center font-semibold">Ningún jugador coincide con “{busqueda}”.</p>
+    return (
+      <div className="p-8 text-center">
+        <img src={sinResultados} alt="" className="mx-auto mb-4 h-40 w-auto" />
+        <p className="font-semibold">Ningún jugador coincide con “{busqueda}”.</p>
+      </div>
+    )
   }
 
   return (

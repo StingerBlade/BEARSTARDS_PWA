@@ -1,7 +1,7 @@
-import aguja from '../../assets/svg/aguja.svg'
-import casco from '../../assets/svg/casco.svg'
-import pistola from '../../assets/svg/pistola.svg'
-import rolloHilo from '../../assets/svg/rollo-hilo.svg'
+import casco from '../../assets/img/item-helmet-v2.webp'
+import rolloHilo from '../../assets/img/item-thread-spool.webp'
+import pistola from '../../assets/img/weapon-dart-blaster-v2.webp'
+import aguja from '../../assets/img/weapon-sewing-needle.webp'
 import Reveal from '../Reveal'
 import Titulo from '../Titulo'
 
@@ -75,9 +75,9 @@ export default function Armas() {
               delay={i * 120}
               className="toon-lg overflow-hidden rounded-[2rem] bg-paper text-ink transition-transform hover:rotate-0"
             >
-              <div className={`relative grid h-64 place-items-center overflow-hidden border-b-4 border-ink p-3 ${a.color}`}>
+              <div className={`relative grid h-64 place-items-center overflow-hidden border-b-4 border-ink p-6 ${a.color}`}>
                 <div aria-hidden="true" className={puntos} />
-                <img src={a.imagen} alt={a.alt} className="relative h-full w-full animate-wiggle" />
+                <img src={a.imagen} alt={a.alt} className="relative h-52 w-full animate-wiggle object-contain drop-shadow-[6px_6px_0_var(--color-ink)]" />
               </div>
               <div className="p-6 sm:p-8">
                 <span className="mb-3 inline-block rounded-full border-[3px] border-ink bg-sun px-3 py-0.5 text-sm font-bold tracking-wide uppercase">
@@ -104,7 +104,7 @@ export default function Armas() {
             >
               <div className={`relative grid h-44 place-items-center overflow-hidden border-b-4 border-ink ${o.color}`}>
                 <div aria-hidden="true" className={puntos} />
-                <img src={o.imagen} alt="" className="relative size-28 drop-shadow-[5px_5px_0_var(--color-ink)]" />
+                <img src={o.imagen} alt="" className="relative h-32 w-auto object-contain drop-shadow-[5px_5px_0_var(--color-ink)]" />
               </div>
               <div className="p-6">
                 <span className="mb-3 inline-block rounded-full border-[3px] border-ink bg-sun px-3 py-0.5 text-sm font-bold tracking-wide uppercase">

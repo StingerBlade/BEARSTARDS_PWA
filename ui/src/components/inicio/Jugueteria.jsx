@@ -1,3 +1,6 @@
+import remate from '../../assets/img/phase-finale.webp'
+import lucesApagadas from '../../assets/img/phase-lights-off.webp'
+import nuevaMercancia from '../../assets/img/phase-new-stock.webp'
 import mapa from '../../assets/svg/mapa.svg'
 import Ola from '../Ola'
 import Reveal from '../Reveal'
@@ -11,9 +14,24 @@ const LEYENDA = [
 ]
 
 const FASES = [
-  { color: 'bg-sky', titulo: 'Luces apagadas', texto: 'Sigilo: consigue la aguja e identifica a tu rival.' },
-  { color: 'bg-mint', titulo: 'Mercancía nueva', texto: 'Se anuncia la pistola de dardos. Ir por ella te expone.' },
-  { color: 'bg-pink', titulo: 'Remate final', texto: 'La mitad de los NPCs vuelve al estante: menos camuflaje.' },
+  {
+    color: 'bg-sky',
+    titulo: 'Luces apagadas',
+    texto: 'Sigilo: consigue la aguja e identifica a tu rival.',
+    imagen: lucesApagadas,
+  },
+  {
+    color: 'bg-mint',
+    titulo: 'Mercancía nueva',
+    texto: 'Se anuncia la pistola de dardos. Ir por ella te expone.',
+    imagen: nuevaMercancia,
+  },
+  {
+    color: 'bg-pink',
+    titulo: 'Remate final',
+    texto: 'Últimos minutos antes del cierre: cada eliminación puede decidir quién se vende.',
+    imagen: remate,
+  },
 ]
 
 export default function Jugueteria() {
@@ -32,7 +50,7 @@ export default function Jugueteria() {
             </p>
             <ol className="mt-8 grid gap-4">
               {FASES.map((f, i) => (
-                <li key={f.titulo} className="toon grid grid-cols-[56px_1fr] items-center gap-4 rounded-3xl bg-white p-4">
+                <li key={f.titulo} className="toon grid grid-cols-[56px_1fr_auto] items-center gap-4 rounded-3xl bg-white p-4">
                   <span className={`toon grid size-14 place-items-center rounded-full font-display text-3xl ${f.color}`}>
                     {i + 1}
                   </span>
@@ -40,6 +58,9 @@ export default function Jugueteria() {
                     <h3 className="mb-0.5 text-2xl">{f.titulo}</h3>
                     <p className="text-ink/80">{f.texto}</p>
                   </div>
+                  {f.imagen && (
+                    <img src={f.imagen} alt="" className="-my-6 h-16 w-auto rotate-3 sm:h-24 drop-shadow-[3px_3px_0_var(--color-ink)]" />
+                  )}
                 </li>
               ))}
             </ol>
