@@ -55,6 +55,8 @@ ALLOWED_HOSTS=localhost,127.0.0.1
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/bearstards
 ```
 
+Para probar el correo de bienvenida con envío real, agrega también `RESEND_API_KEY=re_...`. Sin ella, el correo se imprime en la consola de `runserver`.
+
 - Para desarrollar, usa una base local (ver [Docker](#base-de-datos-local-con-docker)) o un proyecto de Supabase de pruebas, no el de producción.
 - La URL de Supabase sale de **Connect → Session pooler → URI**. Si la contraseña tiene caracteres especiales, se codifican (`@` → `%40`).
 

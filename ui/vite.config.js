@@ -28,6 +28,8 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Fuentes e imágenes también se guardan para abrir sin conexión
+        globPatterns: ['**/*.{js,css,html,png,svg,webp,woff2,otf}'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//, /^\/admin\//],
         runtimeCaching: [

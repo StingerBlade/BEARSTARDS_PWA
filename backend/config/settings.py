@@ -149,6 +149,25 @@ WHITENOISE_INDEX_FILE = True
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# Correo: Resend por SMTP (usuario "resend", contraseña = API key).
+# Sin RESEND_API_KEY (local, tests) los correos se imprimen en la consola.
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
+if RESEND_API_KEY:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_HOST = "smtp.resend.com"
+    EMAIL_PORT = 587
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = "resend"
+    EMAIL_HOST_PASSWORD = RESEND_API_KEY
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+EMAIL_TIMEOUT = 10
+DEFAULT_FROM_EMAIL = os.environ.get(
+    "DEFAULT_FROM_EMAIL", "Little Bearstards <hola@littlebearstards.com>"
+)
+# Para los enlaces de los correos
+SITIO_URL = os.environ.get("SITIO_URL", "https://littlebearstards.com")
+
 # Logs: solo por consola. En Render se ven en el panel del servicio (Logs),
 # que los conserva 7 días en un workspace Hobby. El disco de Render se borra
 # en cada deploy o reinicio, así que no se escriben archivos.

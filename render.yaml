@@ -28,3 +28,6 @@ services:
         sync: false
       - key: ALLOWED_HOSTS
         sync: false
+    # Correos de bienvenida: API key de Resend (dominio littlebearstards.com).
+      - key: RESEND_API_KEY
+        sync: false
