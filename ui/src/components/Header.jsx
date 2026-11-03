@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { cerrarSesion } from '../api/cliente'
+import { useSesion } from '../api/useSesion'
 import logo from '../assets/img/turbo-oscuro.webp'
 import { SECCIONES } from './secciones'
 import { boton } from './ui'
@@ -12,6 +14,7 @@ export default function Header() {
   const [conFondo, setConFondo] = useState(false)
   const { pathname } = useLocation()
   const navigate = useNavigate()
+  const sesion = useSesion()
 
   useEffect(() => {
     const alMover = () => setConFondo(window.scrollY > 24)
@@ -31,6 +34,12 @@ export default function Header() {
     setAbierto(false)
     if (pathname === '/') document.getElementById(id)?.scrollIntoView()
     else navigate('/', { state: { seccion: id } })
+  }
+
+  async function salir() {
+    setAbierto(false)
+    await cerrarSesion()
+    navigate('/')
   }
 
   return (
@@ -61,17 +70,35 @@ export default function Header() {
           >
             Ranking
           </NavLink>
-          <div className="mt-2 flex flex-wrap items-center gap-3 lg:mt-0 lg:ml-2">
-            <NavLink
-              to="/login"
-              onClick={() => setAbierto(false)}
-              className={({ isActive }) => `${enlace} ${isActive ? 'text-sun' : ''}`}
-            >
-              Iniciar sesión
-            </NavLink>
-            <Link to="/registro" onClick={() => setAbierto(false)} className={boton('sun', 'px-5 py-2 text-base')}>
-              Crear cuenta
-            </Link>
+          <div className="mt-2 flex flex-wrap items-center gap-3 lg:mt-0 lg:ml-2 lg:flex-nowrap lg:whitespace-nowrap">
+            {sesion ? (
+              <>
+                <Link
+                  to="/panel"
+                  onClick={() => setAbierto(false)}
+                  title={sesion.jugador.username}
+                  className={boton('sun', 'max-w-[14rem] truncate px-5 py-2 text-base')}
+                >
+                  {sesion.jugador.username}
+                </Link>
+                <button type="button" onClick={salir} className={enlace}>
+                  Cerrar sesión
+                </button>
+              </>
+            ) : (
+              <>
+                <NavLink
+                  to="/login"
+                  onClick={() => setAbierto(false)}
+                  className={({ isActive }) => `${enlace} ${isActive ? 'text-sun' : ''}`}
+                >
+                  Iniciar sesión
+                </NavLink>
+                <Link to="/registro" onClick={() => setAbierto(false)} className={boton('sun', 'px-5 py-2 text-base')}>
+                  Crear cuenta
+                </Link>
+              </>
+            )}
           </div>
         </nav>
 

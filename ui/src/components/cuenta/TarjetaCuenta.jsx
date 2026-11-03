@@ -24,9 +24,6 @@ export default function TarjetaCuenta({ titulo, subtitulo, pie, children }) {
             {pie.enlace}
           </Link>
         </p>
-        <p className="mx-auto mt-4 max-w-sm rounded-xl border-2 border-dashed border-sun/70 bg-ink/40 px-4 py-2 text-center text-xs text-sun">
-          Modo demostración: todavía no hay servidor y nada se guarda. La misma cuenta servirá en el juego.
-        </p>
       </div>
     </div>
   )
