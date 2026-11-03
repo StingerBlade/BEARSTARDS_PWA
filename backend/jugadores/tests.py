@@ -1,7 +1,12 @@
 # Create your tests here.
+import copy
+import json
+from pathlib import Path
 from unittest import mock
 
+from django.conf import settings
 from django.core import mail
+from jsonschema import Draft202012Validator
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
@@ -207,3 +212,54 @@ class ReportarPartidaTests(APITestCase):
         r = self.client.get("/api/yo/partidas/")
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.data[0]["resultado"], "victoria")
+
+
+# Contrato con el juego (CI-P03): contratos/resultado-partida.schema.json
+
+ESQUEMA = json.loads(
+    (Path(settings.BASE_DIR) / "contratos" / "resultado-partida.schema.json").read_text(
+        encoding="utf-8"
+    )
+)
+VALIDADOR = Draft202012Validator(ESQUEMA)
+
+
+class ContratoResultadoTests(APITestCase):
+    def setUp(self):
+        self.a = Jugador.objects.create_user("oso_rojo", password="Peluche-Seguro-1")
+        self.b = Jugador.objects.create_user("oso_azul", password="Peluche-Seguro-2")
+        token = Token.objects.create(user=self.a)
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+
+    def ejemplo(self):
+        # El ejemplo del esquema con los ids de los jugadores de la prueba
+        datos = copy.deepcopy(ESQUEMA["examples"][0])
+        datos["jugadores"][0]["id"] = self.a.id
+        datos["jugadores"][1]["id"] = self.b.id
+        return datos
+
+    def test_el_esquema_es_valido(self):
+        Draft202012Validator.check_schema(ESQUEMA)
+
+    def test_el_ejemplo_cumple_el_esquema_y_la_api_lo_acepta(self):
+        datos = self.ejemplo()
+        VALIDADOR.validate(datos)
+        r = self.client.post("/api/partidas/", datos, format="json")
+        self.assertEqual(r.status_code, 201)
+
+    def test_resultado_con_campos_faltantes_da_400(self):
+        faltantes = [("match_id", None), ("jugadores", None)] + [
+            (campo, 0) for campo in ESQUEMA["$defs"]["jugador"]["required"]
+        ]
+        for campo, jugador in faltantes:
+            with self.subTest(falta=campo):
+                datos = self.ejemplo()
+                datos["match_id"] = f"sin-{campo}"
+                if jugador is None:
+                    del datos[campo]
+                else:
+                    del datos["jugadores"][jugador][campo]
+                self.assertFalse(VALIDADOR.is_valid(datos))
+                r = self.client.post("/api/partidas/", datos, format="json")
+                self.assertEqual(r.status_code, 400)
+        self.assertEqual(Partida.objects.count(), 0)
