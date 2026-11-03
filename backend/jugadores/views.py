@@ -12,6 +12,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
 
+from .correos import enviar_bienvenida
 from .models import Jugador, Participacion, Partida
 from .serializers import (
     JugadorSerializer,
@@ -45,6 +46,8 @@ def registro(request):
     serializer.is_valid(raise_exception=True)
     jugador = serializer.save()
     logger.info("Jugador registrado: id=%s username=%s", jugador.id, jugador.username)
+    if jugador.email:
+        enviar_bienvenida(jugador)
     return respuesta_sesion(jugador, status.HTTP_201_CREATED)
 
 

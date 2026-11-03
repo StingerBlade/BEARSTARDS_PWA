@@ -4,12 +4,17 @@ import { boton, etiqueta, input } from '../ui'
 import { Alerta, Ojo, Reloj, SinWifi } from './iconos'
 
 const USUARIO_VALIDO = /^[\wÁÉÍÓÚáéíóúÑñ.@+-]{3,30}$/
+const CORREO_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-function validar({ username, password }, registro) {
+function validar({ username, email, password }, registro) {
   const e = {}
   const u = username.trim()
   if (!u) e.username = 'Escribe tu nombre de jugador.'
   else if (!USUARIO_VALIDO.test(u)) e.username = 'Usa de 3 a 30 letras, números o . _ - @ +'
+  if (registro) {
+    if (!email.trim()) e.email = 'Escribe tu correo para recibir la bienvenida.'
+    else if (!CORREO_VALIDO.test(email.trim())) e.email = 'Revisa tu correo, parece incompleto.'
+  }
   if (!password) e.password = 'Escribe tu contraseña.'
   else if (registro && password.length < 8) {
     const faltan = 8 - password.length
@@ -36,7 +41,7 @@ export default function FormularioCuenta({ tipo }) {
   const navigate = useNavigate()
   const resumen = useRef(null)
 
-  const [valores, setValores] = useState({ username: '', password: '' })
+  const [valores, setValores] = useState({ username: '', email: '', password: '' })
   const [errores, setErrores] = useState({})
   const [verPass, setVerPass] = useState(false)
   const [enviando, setEnviando] = useState(false)
@@ -44,7 +49,7 @@ export default function FormularioCuenta({ tipo }) {
   // Temporal: permite ver el aviso de "sin conexión" mientras no hay API
   const [sinConexion, setSinConexion] = useState(false)
 
-  const ids = { username: `${id}-usuario`, password: `${id}-pass` }
+  const ids = { username: `${id}-usuario`, email: `${id}-correo`, password: `${id}-pass` }
 
   function cambiar(e) {
     const nuevos = { ...valores, [e.target.name]: e.target.value }
@@ -146,6 +151,33 @@ export default function FormularioCuenta({ tipo }) {
         />
         <ErrorCampo id={`${ids.username}-err`} mensaje={errores.username} />
       </div>
+
+      {registro && (
+        <div className="mb-5">
+          <label htmlFor={ids.email} className={etiqueta}>
+            Correo
+          </label>
+          <input
+            id={ids.email}
+            name="email"
+            type="email"
+            value={valores.email}
+            onChange={cambiar}
+            onBlur={salir}
+            placeholder="oso@correo.com"
+            autoComplete="email"
+            autoCapitalize="none"
+            spellCheck="false"
+            aria-invalid={Boolean(errores.email)}
+            aria-describedby={`${ids.email}-ayuda ${ids.email}-err`}
+            className={input}
+          />
+          <p id={`${ids.email}-ayuda`} className="mt-1.5 text-sm text-ink/70">
+            Te mandamos un correo de bienvenida.
+          </p>
+          <ErrorCampo id={`${ids.email}-err`} mensaje={errores.email} />
+        </div>
+      )}
 
       <div className="mb-5">
         <label htmlFor={ids.password} className={etiqueta}>
