@@ -7,11 +7,17 @@ from rest_framework.test import APITestCase
 
 from .models import Jugador, Participacion, Partida
 
+
+def imprimir_separador(nombre_test):
+    print(f"\n{'-' * 15} TEST: {nombre_test} {'-' * 15}")
+
+
 # Registro, login y perfil
 
 
 class RegistroLoginTests(APITestCase):
     def test_registro_crea_jugador_y_devuelve_token(self):
+        imprimir_separador("test_registro_crea_jugador_y_devuelve_token")
         r = self.client.post(
             "/api/auth/registro/",
             {"username": "oso_nuevo", "password": "Peluche-Seguro-1"},
@@ -23,6 +29,7 @@ class RegistroLoginTests(APITestCase):
         self.assertNotEqual(jugador.password, "Peluche-Seguro-1")  # se guarda con hash
 
     def test_registro_con_usuario_repetido_da_400(self):
+        imprimir_separador("test_registro_con_usuario_repetido_da_400")
         Jugador.objects.create_user("oso_rojo", password="Peluche-Seguro-1")
         r = self.client.post(
             "/api/auth/registro/",
@@ -32,6 +39,7 @@ class RegistroLoginTests(APITestCase):
         self.assertEqual(r.status_code, 400)
 
     def test_login_correcto_e_incorrecto(self):
+        imprimir_separador("test_login_correcto_e_incorrecto")
         Jugador.objects.create_user("oso_rojo", password="Peluche-Seguro-1")
         ok = self.client.post(
             "/api/auth/login/",
@@ -47,6 +55,7 @@ class RegistroLoginTests(APITestCase):
         self.assertEqual(mal.status_code, 400)
 
     def test_yo_sin_token_da_401(self):
+        imprimir_separador("test_yo_sin_token_da_401")
         self.assertEqual(self.client.get("/api/yo/").status_code, 401)
 
 
@@ -59,6 +68,7 @@ class CorreoBienvenidaTests(APITestCase):
         return self.client.post("/api/auth/registro/", datos, format="json")
 
     def test_con_correo_manda_bienvenida_con_imagenes(self):
+        imprimir_separador("test_con_correo_manda_bienvenida_con_imagenes")
         r = self.registrar(email="Oso@Ejemplo.com")
         self.assertEqual(r.status_code, 201)
         self.assertEqual(
@@ -82,10 +92,12 @@ class CorreoBienvenidaTests(APITestCase):
             self.assertIn(cid, adjuntas)
 
     def test_sin_correo_no_manda_nada(self):
+        imprimir_separador("test_sin_correo_no_manda_nada")
         self.assertEqual(self.registrar().status_code, 201)
         self.assertEqual(len(mail.outbox), 0)
 
     def test_correo_repetido_da_400(self):
+        imprimir_separador("test_correo_repetido_da_400")
         Jugador.objects.create_user(
             "oso_rojo", email="oso@ejemplo.com", password="Peluche-Seguro-1"
         )
@@ -94,6 +106,7 @@ class CorreoBienvenidaTests(APITestCase):
         self.assertIn("email", r.data)
 
     def test_si_falla_el_envio_el_registro_sigue(self):
+        imprimir_separador("test_si_falla_el_envio_el_registro_sigue")
         with mock.patch(
             "django.core.mail.EmailMultiAlternatives.send",
             side_effect=OSError("sin red"),
@@ -105,6 +118,7 @@ class CorreoBienvenidaTests(APITestCase):
 
 class RankingTests(APITestCase):
     def test_ranking_es_publico_y_ordena_por_puntos(self):
+        imprimir_separador("test_ranking_es_publico_y_ordena_por_puntos")
         Jugador.objects.create_user("bajo", password="x", puntos_totales=100)
         Jugador.objects.create_user("alto", password="x", puntos_totales=900)
         r = self.client.get("/api/ranking/")
@@ -135,6 +149,7 @@ class ReportarPartidaTests(APITestCase):
         return datos
 
     def test_suma_estadisticas(self):
+        imprimir_separador("test_suma_estadisticas")
         r = self.client.post("/api/partidas/", self.reporte(), format="json")
         self.assertEqual(r.status_code, 201)
         self.a.refresh_from_db()
@@ -147,6 +162,7 @@ class ReportarPartidaTests(APITestCase):
         self.assertEqual(Participacion.objects.count(), 2)
 
     def test_empate(self):
+        imprimir_separador("test_empate")
         jugadores = [
             {"id": self.a.id, "puntos": 400, "kills": 2, "resultado": "empate"},
             {"id": self.b.id, "puntos": 400, "kills": 2, "resultado": "empate"},
@@ -159,6 +175,7 @@ class ReportarPartidaTests(APITestCase):
         self.assertEqual(self.a.empates, 1)
 
     def test_reporte_repetido_da_409_y_no_duplica(self):
+        imprimir_separador("test_reporte_repetido_da_409_y_no_duplica")
         self.client.post("/api/partidas/", self.reporte(), format="json")
         r = self.client.post("/api/partidas/", self.reporte(), format="json")
         self.assertEqual(r.status_code, 409)
@@ -167,6 +184,7 @@ class ReportarPartidaTests(APITestCase):
         self.assertEqual(self.a.partidas, 1)
 
     def test_resultados_incoherentes_dan_400(self):
+        imprimir_separador("test_resultados_incoherentes_dan_400")
         jugadores = [
             {"id": self.a.id, "puntos": 950, "kills": 4, "resultado": "victoria"},
             {"id": self.b.id, "puntos": 400, "kills": 2, "resultado": "victoria"},
@@ -177,6 +195,7 @@ class ReportarPartidaTests(APITestCase):
         self.assertEqual(r.status_code, 400)
 
     def test_acepta_puntos_cero_y_negativos(self):
+        imprimir_separador("test_acepta_puntos_cero_y_negativos")
         jugadores = [
             {"id": self.a.id, "puntos": 0, "kills": 0, "resultado": "victoria"},
             {"id": self.b.id, "puntos": -100, "kills": 0, "resultado": "derrota"},
@@ -189,6 +208,7 @@ class ReportarPartidaTests(APITestCase):
         self.assertEqual((self.b.puntos_totales, self.b.mejor_puntuacion), (-100, -100))
 
     def test_mejor_puntuacion_no_baja_con_una_partida_negativa(self):
+        imprimir_separador("test_mejor_puntuacion_no_baja_con_una_partida_negativa")
         self.client.post("/api/partidas/", self.reporte(), format="json")
         jugadores = [
             {"id": self.a.id, "puntos": -50, "kills": 0, "resultado": "derrota"},
@@ -203,6 +223,7 @@ class ReportarPartidaTests(APITestCase):
         self.assertEqual((self.a.puntos_totales, self.a.mejor_puntuacion), (900, 950))
 
     def test_mis_partidas_devuelve_historial(self):
+        imprimir_separador("test_mis_partidas_devuelve_historial")
         self.client.post("/api/partidas/", self.reporte(), format="json")
         r = self.client.get("/api/yo/partidas/")
         self.assertEqual(r.status_code, 200)
