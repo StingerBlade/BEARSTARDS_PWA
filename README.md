@@ -18,7 +18,7 @@ PWA de **Little Bearstards** (Turbo Studios). Presenta el juego, muestra el rank
 |---|---|
 | [**Backend** (`backend/`)](backend/README.md) | Puesta en marcha de Django, base de datos y migraciones, API, comandos del CI, base de datos local con Docker y problemas comunes |
 | [**Interfaz** (`ui/`)](ui/README.md) | Puesta en marcha de React + Vite, conexión con el backend en local, estructura, pantallas y reglas para trabajar en el front |
-| [**Laboratorio de pruebas**](docs/laboratorio-pruebas/README.md) | Cómo replicar la base de datos con scripts SQL, levantar backend y PWA en local, y las pruebas con sus evidencias |
+| [**Laboratorio de pruebas**](docs/laboratorio-pruebas/README.md) | Cómo replicar la base de datos con scripts SQL, levantar backend y PWA en local, las pruebas (P1 a P10) y sus [evidencias](docs/laboratorio-pruebas/evidencias/README.md) |
 
 Planeación general del proyecto: [StingerBlade/planeacion_integradora](https://github.com/StingerBlade/planeacion_integradora).
 
