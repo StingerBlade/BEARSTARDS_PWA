@@ -6,8 +6,11 @@ Banco de pruebas de la PWA de **Little Bearstards** conectada al backend Django 
 - **Envío (`POST`)** de una transacción nueva desde la PWA: el **registro de un usuario**.
 - **Persistencia e integridad** de los datos en PostgreSQL, antes y después del envío.
 - **Respuesta** del backend (códigos, tiempos, memoria y consultas SQL) y **comportamiento offline** de la PWA.
+- **Reglas del backend** con los 16 tests automáticos.
 
 ← [Volver al README principal](../../README.md) · [Backend](../../backend/README.md) · [Interfaz](../../ui/README.md)
+
+> 📸 **Resultados:** las capturas y el registro paso a paso de cómo se hizo el laboratorio están en **[Evidencias del laboratorio](evidencias/README.md)**.
 
 ## Contenido de esta carpeta
 
@@ -20,7 +23,9 @@ docs/laboratorio-pruebas/
 │   ├── 02_carga.sql        # carga los datos de prueba
 │   ├── 03_consultas.sql    # consultas de verificación (antes y después)
 │   └── generar_esquema.sh  # regenera 00_esquema.sql desde las migraciones de Django
-└── evidencias/             # capturas y logs de cada prueba
+└── evidencias/
+    ├── README.md           # registro paso a paso con las capturas
+    └── *.png               # capturas de cada prueba
 ```
 
 ## Requisitos
@@ -144,13 +149,13 @@ npm run build
 npm run preview
 ```
 
-Abre **`http://localhost:4173` en Chrome o Edge**. Firefox no tiene Background Sync y su pestaña de herramientas es distinta. Tanto `npm run preview` como `npm run dev` (puerto 5173, sin service worker) reenvían las peticiones `/api/...` al backend en `localhost:8000`.
+Abre **`http://localhost:4173/#/laboratorio` en Chrome o Edge**: es la pantalla del laboratorio, con el ranking, el registro, el inicio de sesión y el perfil. Las demás pantallas de la PWA (Ranking, Iniciar sesión, Registro y Mi panel) usan la misma API. Firefox no tiene Background Sync y su pestaña de herramientas es distinta. Tanto `npm run preview` como `npm run dev` (puerto 5173, sin service worker) reenvían las peticiones `/api/...` al backend en `localhost:8000`.
 
 > Si después de un cambio no ves la versión nueva, el service worker anterior sigue activo: en **F12 → Application → Service workers** presiona **Unregister** y recarga.
 
 ## 4. Pruebas y evidencias
 
-Guarda cada captura en `evidencias/` con el número de la prueba (por ejemplo `P2-network-get.png`).
+Guarda cada captura en `evidencias/` con un número consecutivo (por ejemplo `06-network-get.png`) y descríbela en [`evidencias/README.md`](evidencias/README.md), que indica qué captura corresponde a cada prueba.
 
 | # | Prueba | Qué hacer | Resultado esperado | Evidencia |
 |---|---|---|---|---|
@@ -163,12 +168,25 @@ Guarda cada captura en `evidencias/` con el número de la prueba (por ejemplo `P
 | P7 | Logs del backend | Revisar la terminal de `runserver` tras P2–P6 | Una línea por petición: método, ruta, código, tiempo, tamaños, memoria y consultas SQL | Captura de la terminal |
 | P8 | Modo offline | Abrir la PWA una vez con conexión. Luego F12 → Network → **Offline** y recargar | La app abre igual y el ranking muestra la última copia guardada; las respuestas dicen *(ServiceWorker)* | **Application → Manifest**, **Service workers** (`sw.js` activo) y **Cache Storage** (`workbox-precache` y `api-ranking`) |
 | P9 | Sincronización offline/online | Sin sesión, con **Offline**: registrar un usuario. Después volver a **No throttling** | Sin conexión: mensaje *"el registro quedó en cola"* y la petición guardada en IndexedDB. Al reconectar: `POST /api/auth/registro/` → 201, la cola se vacía y el usuario aparece en el ranking y en la base | **Application → IndexedDB → `workbox-background-sync` → `requests`** antes y después, Network con el 201, y `03_consultas.sql` |
+| P10 | Tests automáticos | Desde `backend/`, con el entorno activo: `python manage.py test` | `Ran 16 tests` y `OK`. Cada test imprime un separador con su nombre (`--- TEST: … ---`) | Captura de la terminal |
 
 Para ejecutar las consultas de verificación:
 
 ```bash
 psql -U postgres -h localhost -d bearstards -f docs/laboratorio-pruebas/sql/03_consultas.sql
 ```
+
+Para correr los tests automáticos (P10):
+
+```bash
+cd backend
+```
+
+```bash
+python manage.py test
+```
+
+Django crea una base de datos temporal, corre los tests y la borra al terminar: nunca tocan la base del laboratorio ni Supabase. Qué revisa cada test está en [Evidencias · Paso 15](evidencias/README.md#paso-15--correr-los-tests-del-backend).
 
 ### Cómo leer el log del backend
 
