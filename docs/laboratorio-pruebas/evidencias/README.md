@@ -1,6 +1,6 @@
 # Evidencias del laboratorio de pruebas
 
-Registro, en orden, de cómo se hizo el laboratorio de la PWA de **Little Bearstards**: desde crear la base de datos hasta probar el modo offline y correr los tests automáticos. Cada paso indica la prueba de la guía que cubre (P1 a P9) y las capturas que lo demuestran.
+Registro, en orden, de cómo se hizo el laboratorio de la PWA de **Little Bearstards**: desde crear la base de datos hasta probar el modo offline y correr los tests automáticos. Cada paso indica la prueba de la guía que cubre (P1 a P10) y las capturas que lo demuestran.
 
 ← [Volver a la guía del laboratorio](../README.md)
 
@@ -22,7 +22,7 @@ Registro, en orden, de cómo se hizo el laboratorio de la PWA de **Little Bearst
 | 12 | Registrar sin conexión y sincronizar al volver | P9 | 17, 18, 19, 20 |
 | 13 | Consultar el estado final | P4, P9 | 21, 22b |
 | 14 | Revisar los logs del backend | P7 | 23 |
-| 15 | Correr los tests automáticos del backend | — | 24 |
+| 15 | Correr los tests automáticos del backend | P10 | 24 |
 
 ---
 
@@ -195,15 +195,17 @@ El registro es la petición más lenta porque el hash de la contraseña (PBKDF2)
 ## Parte 6 · Tests automáticos
 
 ### Paso 15 · Correr los tests del backend
-Además de las pruebas manuales, el backend tiene 10 tests automáticos en `backend/jugadores/tests.py`. Se ejecutaron desde `backend/`, con el entorno virtual activo:
+Además de las pruebas manuales, el backend tiene 16 tests automáticos en `backend/jugadores/tests.py`. Se ejecutaron desde `backend/`, con el entorno virtual activo:
 
     python manage.py test
 
 Django crea una base de datos temporal, corre los tests y la borra al terminar, así que nunca tocan los datos del laboratorio ni los de Supabase.
 
-**Resultado:** `Ran 10 tests` y `OK`.
+Antes de correr, cada test imprime un separador con su nombre (`--------------- TEST: test_empate ---------------`), así en la captura se ve qué log pertenece a cada test.
 
-Los 10 tests, por grupo:
+**Resultado:** `Ran 16 tests` y `OK`.
+
+Los 16 tests, por grupo:
 
 **Grupo 1 · `RegistroLoginTests`: cuentas y sesiones**
 
@@ -212,19 +214,28 @@ Los 10 tests, por grupo:
 3. **`test_login_correcto_e_incorrecto`**: con la contraseña correcta, el login responde **200**; con una incorrecta, **400**.
 4. **`test_yo_sin_token_da_401`**: pedir el perfil (`/api/yo/`) sin token responde **401**; el perfil está protegido.
 
-**Grupo 2 · `RankingTests`**
+**Grupo 2 · `CorreoBienvenidaTests`: correo de bienvenida al registrarse**
 
-5. **`test_ranking_es_publico_y_ordena_por_puntos`**: el ranking (`/api/ranking/`) se ve **sin iniciar sesión** y ordena a los jugadores de más a menos puntos.
+5. **`test_con_correo_manda_bienvenida_con_imagenes`**: si el registro incluye correo, se guarda en minúsculas y se envía **un** correo de bienvenida a esa dirección, con el nombre del jugador y sus 4 imágenes adjuntas.
+6. **`test_sin_correo_no_manda_nada`**: registrarse sin correo responde **201** y no se envía nada; el correo es opcional.
+7. **`test_correo_repetido_da_400`**: registrar un correo que ya usa otra cuenta (sin importar mayúsculas) responde **400**.
+8. **`test_si_falla_el_envio_el_registro_sigue`**: si el envío del correo falla (por ejemplo, sin red), la cuenta se crea igual y responde **201**.
 
-**Grupo 3 · `ReportarPartidaTests`: el endpoint que usa Unity**
+**Grupo 3 · `RankingTests`**
+
+9. **`test_ranking_es_publico_y_ordena_por_puntos`**: el ranking (`/api/ranking/`) se ve **sin iniciar sesión** y ordena a los jugadores de más a menos puntos.
+
+**Grupo 4 · `ReportarPartidaTests`: el endpoint que usa Unity**
 
 Antes de cada test se crean dos jugadores (`oso_rojo` y `oso_azul`) y se inicia sesión como el primero.
 
-6. **`test_suma_estadisticas`**: al reportar una partida, el ganador suma partida, victoria, kills, puntos y mejor puntuación, y el perdedor suma su derrota; se crean las 2 participaciones.
-7. **`test_empate`**: si los dos jugadores empatan, a cada uno se le suma **1 al contador de empates**.
-8. **`test_reporte_repetido_da_409_y_no_duplica`**: si la misma partida (mismo `match_id`) se reporta dos veces, el segundo reporte responde **409** y las estadísticas **no se cuentan doble**.
-9. **`test_resultados_incoherentes_dan_400`**: un reporte con resultados imposibles (dos victorias en la misma partida) responde **400** y no se guarda.
-10. **`test_mis_partidas_devuelve_historial`**: después de una partida, `/api/yo/partidas/` devuelve el historial del jugador con su resultado.
+10. **`test_suma_estadisticas`**: al reportar una partida, el ganador suma partida, victoria, kills, puntos y mejor puntuación, y el perdedor suma su derrota; se crean las 2 participaciones.
+11. **`test_empate`**: si los dos jugadores empatan, a cada uno se le suma **1 al contador de empates**.
+12. **`test_reporte_repetido_da_409_y_no_duplica`**: si la misma partida (mismo `match_id`) se reporta dos veces, el segundo reporte responde **409** y las estadísticas **no se cuentan doble**.
+13. **`test_resultados_incoherentes_dan_400`**: un reporte con resultados imposibles (dos victorias en la misma partida) responde **400** y no se guarda.
+14. **`test_acepta_puntos_cero_y_negativos`**: se aceptan partidas con **0 puntos** o **puntos negativos** (por ejemplo, por golpear NPCs), y se suman tal cual.
+15. **`test_mejor_puntuacion_no_baja_con_una_partida_negativa`**: una partida con puntos negativos resta del total, pero **no baja la mejor puntuación** del jugador.
+16. **`test_mis_partidas_devuelve_historial`**: después de una partida, `/api/yo/partidas/` devuelve el historial del jugador con su resultado.
 
 Los mismos tests corren solos en GitHub Actions (*Backend CI / lint-and-test*) en cada push y Pull Request, contra un PostgreSQL 16 temporal.
 
@@ -244,4 +255,4 @@ Los mismos tests corren solos en GitHub Actions (*Backend CI / lint-and-test*) e
 | Modo offline | La app y el ranking funcionan sin conexión | 7, 11 |
 | Sincronización offline/online | El registro sin red se envió solo al volver la conexión | 12 |
 | Respuesta del backend | Tiempo, tamaños, memoria y consultas SQL de cada petición | 14 |
-| Reglas del backend con tests automáticos | 10 tests en verde (`Ran 10 tests … OK`) | 15 |
+| Reglas del backend con tests automáticos | 16 tests en verde (`Ran 16 tests … OK`) | 15 |
