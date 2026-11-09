@@ -59,9 +59,9 @@ La PWA obtiene todos sus datos de la API REST con `fetch` y rutas relativas (`/a
 
 | Método y ruta | Sesión | Uso en la PWA |
 |---|---|---|
-| `POST /api/auth/registro/` | No | Crear cuenta; devuelve el token y el jugador |
-| `POST /api/auth/login/` | No | Iniciar sesión; devuelve el token y el jugador |
-| `POST /api/auth/logout/` | Sí | Cerrar sesión |
+| `POST /api/auth/registro/` | No | Crear cuenta (`cliente` opcional: `web` o `juego`); devuelve el token y el jugador |
+| `POST /api/auth/login/` | No | Iniciar sesión (`cliente` opcional: `web` o `juego`); devuelve el token y el jugador |
+| `POST /api/auth/logout/` | Sí | Cerrar sesión (solo borra el token de ese cliente) |
 | `GET /api/ranking/` | No | Lista del ranking (top 10 por puntos totales) |
 | `GET /api/yo/` | Sí | Estadísticas del jugador para el Panel |
 | `GET /api/yo/partidas/` | Sí | Historial de las últimas partidas del jugador (lista y gráfica) |
@@ -178,7 +178,7 @@ flowchart LR
 
 ### Sesiones
 
-- El registro y el inicio de sesión devuelven un **token** que identifica al jugador.
+- El registro y el inicio de sesión devuelven un **token** que identifica al jugador. La PWA y el juego tienen cada uno su propio token (`cliente`: `web` o `juego`), así cerrar sesión en uno no cierra el otro.
 - Se usa **el mismo sistema en la PWA y en el juego**: una cuenta creada en un lado sirve en el otro.
 - Para jugar en línea es **obligatorio iniciar sesión**.
 

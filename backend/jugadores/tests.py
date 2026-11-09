@@ -2,10 +2,10 @@
 from unittest import mock
 
 from django.core import mail
-from rest_framework.authtoken.models import Token
+from django.core.cache import cache
 from rest_framework.test import APITestCase
 
-from .models import Jugador, Participacion, Partida
+from .models import Jugador, Participacion, Partida, TokenCliente
 
 
 def imprimir_separador(nombre_test):
@@ -57,6 +57,96 @@ class RegistroLoginTests(APITestCase):
     def test_yo_sin_token_da_401(self):
         imprimir_separador("test_yo_sin_token_da_401")
         self.assertEqual(self.client.get("/api/yo/").status_code, 401)
+
+
+# Un token por cliente (web y juego)
+
+
+class TokenPorClienteTests(APITestCase):
+    def setUp(self):
+        cache.clear()  # el límite de 20 logins/min se guarda en caché entre tests
+        Jugador.objects.create_user("oso_rojo", password="Peluche-Seguro-1")
+
+    def entrar(self, **extra):
+        datos = {"username": "oso_rojo", "password": "Peluche-Seguro-1", **extra}
+        return self.client.post("/api/auth/login/", datos, format="json")
+
+    def yo(self, token):
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + token)
+        return self.client.get("/api/yo/")
+
+    def salir(self, token):
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + token)
+        return self.client.post("/api/auth/logout/")
+
+    def test_web_y_juego_tienen_tokens_distintos(self):
+        imprimir_separador("test_web_y_juego_tienen_tokens_distintos")
+        web = self.entrar(cliente="web")
+        juego = self.entrar(cliente="juego")
+        self.assertEqual((web.status_code, juego.status_code), (200, 200))
+        self.assertEqual(set(web.data), {"token", "jugador"})
+        self.assertNotEqual(web.data["token"], juego.data["token"])
+        self.assertEqual(self.yo(web.data["token"]).status_code, 200)
+        self.assertEqual(self.yo(juego.data["token"]).status_code, 200)
+
+    def test_logout_del_juego_no_cierra_la_web(self):
+        imprimir_separador("test_logout_del_juego_no_cierra_la_web")
+        web = self.entrar(cliente="web").data["token"]
+        juego = self.entrar(cliente="juego").data["token"]
+        self.assertEqual(self.salir(juego).status_code, 204)
+        self.assertEqual(self.yo(juego).status_code, 401)
+        self.assertEqual(self.yo(web).status_code, 200)
+
+    def test_logout_de_la_web_no_cierra_el_juego(self):
+        imprimir_separador("test_logout_de_la_web_no_cierra_el_juego")
+        web = self.entrar(cliente="web").data["token"]
+        juego = self.entrar(cliente="juego").data["token"]
+        self.assertEqual(self.salir(web).status_code, 204)
+        self.assertEqual(self.yo(web).status_code, 401)
+        self.assertEqual(self.yo(juego).status_code, 200)
+
+    def test_mismo_cliente_reutiliza_el_token(self):
+        imprimir_separador("test_mismo_cliente_reutiliza_el_token")
+        primero = self.entrar(cliente="juego").data["token"]
+        segundo = self.entrar(cliente="juego").data["token"]
+        self.assertEqual(primero, segundo)
+        self.assertEqual(TokenCliente.objects.count(), 1)
+
+    def test_cliente_invalido_da_400(self):
+        imprimir_separador("test_cliente_invalido_da_400")
+        r = self.entrar(cliente="consola")
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("cliente", r.data["detail"])
+        r = self.client.post(
+            "/api/auth/registro/",
+            {"username": "oso_nuevo", "password": "Peluche-Seguro-1", "cliente": "x"},
+            format="json",
+        )
+        self.assertEqual(r.status_code, 400)
+        self.assertFalse(Jugador.objects.filter(username="oso_nuevo").exists())
+
+    def test_sin_cliente_se_asume_web(self):
+        imprimir_separador("test_sin_cliente_se_asume_web")
+        r = self.entrar()
+        self.assertEqual(r.status_code, 200)
+        token = TokenCliente.objects.get(key=r.data["token"])
+        self.assertEqual(token.cliente, "web")
+        # Y es el mismo token que si se pide "web" explícito
+        self.assertEqual(self.entrar(cliente="web").data["token"], r.data["token"])
+
+    def test_registro_desde_el_juego(self):
+        imprimir_separador("test_registro_desde_el_juego")
+        r = self.client.post(
+            "/api/auth/registro/",
+            {
+                "username": "oso_nuevo",
+                "password": "Peluche-Seguro-1",
+                "cliente": "juego",
+            },
+            format="json",
+        )
+        self.assertEqual(r.status_code, 201)
+        self.assertEqual(TokenCliente.objects.get(key=r.data["token"]).cliente, "juego")
 
 
 # RANKING
@@ -133,7 +223,7 @@ class ReportarPartidaTests(APITestCase):
     def setUp(self):
         self.a = Jugador.objects.create_user("oso_rojo", password="Peluche-Seguro-1")
         self.b = Jugador.objects.create_user("oso_azul", password="Peluche-Seguro-2")
-        token = Token.objects.create(user=self.a)
+        token = TokenCliente.objects.create(jugador=self.a, cliente="juego")
         self.client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
 
     def reporte(self, **cambios):
@@ -228,3 +318,50 @@ class ReportarPartidaTests(APITestCase):
         r = self.client.get("/api/yo/partidas/")
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.data[0]["resultado"], "victoria")
+
+    def test_abandono_valido_suma_estadisticas(self):
+        imprimir_separador("test_abandono_valido_suma_estadisticas")
+        jugadores = [
+            {"id": self.a.id, "puntos": 700, "kills": 3, "resultado": "victoria"},
+            {
+                "id": self.b.id,
+                "puntos": 100,
+                "kills": 0,
+                "resultado": "derrota",
+                "abandono": True,
+            },
+        ]
+        r = self.client.post(
+            "/api/partidas/",
+            self.reporte(por_abandono=True, jugadores=jugadores),
+            format="json",
+        )
+        self.assertEqual(r.status_code, 201)
+        self.assertTrue(Partida.objects.get().por_abandono)
+        self.assertTrue(Participacion.objects.get(jugador=self.b).abandono)
+        self.a.refresh_from_db()
+        self.b.refresh_from_db()
+        self.assertEqual((self.a.victorias, self.a.puntos_totales), (1, 700))
+        self.assertEqual((self.b.derrotas, self.b.partidas), (1, 1))
+
+    def test_abandonos_incoherentes_dan_400(self):
+        imprimir_separador("test_abandonos_incoherentes_dan_400")
+        victoria = {"id": self.a.id, "puntos": 700, "kills": 3, "resultado": "victoria"}
+        derrota = {"id": self.b.id, "puntos": 100, "kills": 0, "resultado": "derrota"}
+        casos = [
+            # por_abandono sin nadie que abandone
+            (True, [victoria, derrota]),
+            # quien abandona no puede ganar
+            (True, [{**victoria, "abandono": True}, derrota]),
+            # hay abandono pero la partida no dice por_abandono
+            (False, [victoria, {**derrota, "abandono": True}]),
+        ]
+        for por_abandono, jugadores in casos:
+            with self.subTest(por_abandono=por_abandono, jugadores=jugadores):
+                r = self.client.post(
+                    "/api/partidas/",
+                    self.reporte(por_abandono=por_abandono, jugadores=jugadores),
+                    format="json",
+                )
+                self.assertEqual(r.status_code, 400)
+        self.assertEqual(Partida.objects.count(), 0)

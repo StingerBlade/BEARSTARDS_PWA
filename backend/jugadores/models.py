@@ -1,3 +1,6 @@
+import binascii
+import os
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -13,6 +16,37 @@ class Jugador(AbstractUser):
 
     class Meta:
         db_table = "jugador"
+
+
+def generar_llave():
+    # Igual que el Token de DRF: 40 caracteres hexadecimales
+    return binascii.hexlify(os.urandom(20)).decode()
+
+
+class TokenCliente(models.Model):
+    """Un token por jugador y por cliente, así cerrar sesión en la PWA no saca del juego."""
+
+    class Cliente(models.TextChoices):
+        WEB = "web"
+        JUEGO = "juego"
+
+    key = models.CharField(max_length=40, primary_key=True, default=generar_llave)
+    jugador = models.ForeignKey(
+        Jugador, on_delete=models.CASCADE, related_name="tokens"
+    )
+    cliente = models.CharField(max_length=5, choices=Cliente.choices)
+    creado = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "token_cliente"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["jugador", "cliente"], name="uniq_token_jugador_cliente"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.jugador} ({self.cliente})"
 
 
 class Partida(models.Model):
