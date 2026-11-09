@@ -84,9 +84,10 @@ export default function FormularioCuenta({ tipo }) {
     setErrores({})
 
     const username = valores.username.trim()
+    // cliente: 'web' para que el token de la PWA no choque con el del juego
     const cuerpo = registro
-      ? { username, email: valores.email.trim(), password: valores.password }
-      : { username, password: valores.password }
+      ? { username, email: valores.email.trim(), password: valores.password, cliente: 'web' }
+      : { username, password: valores.password, cliente: 'web' }
 
     setEnviando(true)
     try {
