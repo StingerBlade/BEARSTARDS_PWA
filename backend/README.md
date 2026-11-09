@@ -10,7 +10,7 @@ API REST de la PWA de **Little Bearstards**: cuentas de usuario, sesiones con to
 |---|---|
 | Lenguaje | Python 3.12 |
 | Framework | Django 5.2 + Django REST Framework |
-| Sesiones | Token de DRF (`rest_framework.authtoken`) |
+| Sesiones | Un token por cliente (`TokenCliente`: `web` o `juego`), con el encabezado de DRF |
 | Base de datos | PostgreSQL en Supabase (solo como base de datos) |
 | Producción | Render (gunicorn + WhiteNoise) |
 
@@ -92,9 +92,9 @@ winpty python manage.py createsuperuser
 
 | Método y ruta | Sesión | Uso |
 |---|---|---|
-| `POST /api/auth/registro/` | No | Crear cuenta; devuelve token y jugador |
-| `POST /api/auth/login/` | No | Iniciar sesión; devuelve token y jugador |
-| `POST /api/auth/logout/` | Sí | Cerrar sesión |
+| `POST /api/auth/registro/` | No | Crear cuenta (`cliente` opcional: `web` o `juego`); devuelve token y jugador |
+| `POST /api/auth/login/` | No | Iniciar sesión (`cliente` opcional: `web` o `juego`); devuelve token y jugador |
+| `POST /api/auth/logout/` | Sí | Cerrar sesión (solo borra el token de ese cliente) |
 | `GET /api/ranking/` | No | Top 10 por puntos totales |
 | `GET /api/yo/` | Sí | Estadísticas del jugador |
 | `GET /api/yo/partidas/` | Sí | Historial de partidas del jugador |
@@ -102,6 +102,8 @@ winpty python manage.py createsuperuser
 | `GET /api/health/` | No | Render revisa que el servicio esté vivo |
 
 Todas las rutas terminan en `/`. Las peticiones protegidas llevan `Authorization: Token <token>`.
+
+**Un token por cliente:** login y registro aceptan `"cliente": "web"` (la PWA, valor por defecto) o `"cliente": "juego"` (Unity). Cada uno recibe su propio token, así cerrar sesión en la PWA no saca del juego y al revés. Un valor distinto da `400`. Los tokens viejos de `rest_framework.authtoken` se copiaron como `web` en la migración `0004_copiar_tokens_drf`.
 
 **Requisito del docente (LB-07):** la API no puede bloquear el juego. Si no responde, Unity juega igual y conserva el resultado localmente; cada partida debe quedar registrada **una sola vez** (`match_id` único → `409` si se repite).
 

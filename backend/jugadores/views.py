@@ -6,14 +6,13 @@ from django.db import IntegrityError, transaction
 from django.db.models import Case, F, Value, When
 from django.db.models.functions import Greatest
 from rest_framework import status
-from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
 
 from .correos import enviar_bienvenida
-from .models import Jugador, Participacion, Partida
+from .models import Jugador, Participacion, Partida, TokenCliente
 from .serializers import (
     JugadorSerializer,
     ParticipacionSerializer,
@@ -30,8 +29,24 @@ class LimiteLogin(AnonRateThrottle):
     rate = "20/min"  # frena ataques de fuerza bruta
 
 
-def respuesta_sesion(jugador, codigo):
-    token, _ = Token.objects.get_or_create(user=jugador)
+def leer_cliente(request):
+    # Sin "cliente" se asume la PWA, así los clientes viejos siguen igual
+    cliente = request.data.get("cliente", TokenCliente.Cliente.WEB)
+    if cliente not in TokenCliente.Cliente.values:
+        return None
+    return cliente
+
+
+def cliente_invalido():
+    return Response(
+        {"detail": 'El campo "cliente" debe ser "web" o "juego".'},
+        status=status.HTTP_400_BAD_REQUEST,
+    )
+
+
+def respuesta_sesion(jugador, codigo, cliente):
+    # Cada cliente (web o juego) tiene su propio token
+    token, _ = TokenCliente.objects.get_or_create(jugador=jugador, cliente=cliente)
     return Response(
         {"token": token.key, "jugador": JugadorSerializer(jugador).data},
         status=codigo,
@@ -42,19 +57,25 @@ def respuesta_sesion(jugador, codigo):
 @permission_classes([AllowAny])
 @throttle_classes([LimiteLogin])
 def registro(request):
+    cliente = leer_cliente(request)
+    if cliente is None:
+        return cliente_invalido()
     serializer = RegistroSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     jugador = serializer.save()
     logger.info("Jugador registrado: id=%s username=%s", jugador.id, jugador.username)
     if jugador.email:
         enviar_bienvenida(jugador)
-    return respuesta_sesion(jugador, status.HTTP_201_CREATED)
+    return respuesta_sesion(jugador, status.HTTP_201_CREATED, cliente)
 
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
 @throttle_classes([LimiteLogin])
 def login(request):
+    cliente = leer_cliente(request)
+    if cliente is None:
+        return cliente_invalido()
     jugador = authenticate(
         username=request.data.get("username"),
         password=request.data.get("password"),
@@ -64,12 +85,12 @@ def login(request):
             {"detail": "Usuario o contraseña incorrectos."},
             status=status.HTTP_400_BAD_REQUEST,
         )
-    return respuesta_sesion(jugador, status.HTTP_200_OK)
+    return respuesta_sesion(jugador, status.HTTP_200_OK, cliente)
 
 
 @api_view(["POST"])
 def logout(request):
-    request.auth.delete()  # request.auth es el Token usado en la petición
+    request.auth.delete()  # solo el token de este cliente; el otro sigue activo
     return Response(status=status.HTTP_204_NO_CONTENT)
 
 
