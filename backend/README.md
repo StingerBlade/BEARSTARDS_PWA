@@ -107,6 +107,8 @@ Todas las rutas terminan en `/`. Las peticiones protegidas llevan `Authorization
 
 **Requisito del docente (LB-07):** la API no puede bloquear el juego. Si no responde, Unity juega igual y conserva el resultado localmente; cada partida debe quedar registrada **una sola vez** (`match_id` único → `409` si se repite).
 
+**Contrato con el juego (CI-P03):** el cuerpo de `POST /api/partidas/` está definido en [`contratos/resultado-partida.schema.json`](contratos/resultado-partida.schema.json) (JSON Schema 2020-12, con un ejemplo). El repo del juego debe tener una copia idéntica. `ContratoResultadoTests` comprueba que el ejemplo cumple el esquema, que la API lo acepta (`201`) y que un resultado con campos faltantes da `400`.
+
 ## Antes de hacer push
 
 Lo mismo que revisa el CI (`Backend CI / lint-and-test`):
