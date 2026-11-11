@@ -409,7 +409,7 @@ class ContratoResultadoTests(APITestCase):
 
     def test_resultado_con_campos_faltantes_da_400(self):
         imprimir_separador("test_resultado_con_campos_faltantes_da_400")
-        faltantes =[("match_id", None), ("jugadores", None)] + [
+        faltantes = [("match_id", None), ("jugadores", None)] + [
             (campo, 0) for campo in ESQUEMA["$defs"]["jugador"]["required"]
         ]
         for campo, jugador in faltantes:
