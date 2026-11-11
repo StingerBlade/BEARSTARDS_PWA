@@ -8,6 +8,7 @@ BEGIN;
 TRUNCATE TABLE
     participacion,
     partida,
+    token_cliente,
     authtoken_token,
     django_admin_log,
     jugador_groups,
@@ -17,9 +18,10 @@ RESTART IDENTITY CASCADE;
 
 COMMIT;
 
--- Comprobación: las cuatro cuentas deben dar 0.
+-- Comprobación: las cinco cuentas deben dar 0.
 SELECT
     (SELECT count(*) FROM jugador)         AS jugadores,
     (SELECT count(*) FROM partida)         AS partidas,
     (SELECT count(*) FROM participacion)   AS participaciones,
-    (SELECT count(*) FROM authtoken_token) AS tokens;
+    (SELECT count(*) FROM token_cliente)   AS tokens,
+    (SELECT count(*) FROM authtoken_token) AS tokens_viejos;

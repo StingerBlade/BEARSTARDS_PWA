@@ -10,7 +10,7 @@
 
 PWA de **Little Bearstards** (Turbo Studios). Presenta el juego, muestra el ranking de jugadores, permite registrarse e iniciar sesión, y recibe desde el juego (Unity) el resultado de cada partida.
 
-> **Estado:** en desarrollo. Este documento describe la propuesta de arquitectura e interfaz. El backend ya tiene el proyecto Django, los modelos y las tablas creadas en Supabase; faltan los endpoints y el despliegue en Render.
+> **Estado:** en producción en **[littlebearstards.com](https://littlebearstards.com)**. La API, la PWA y la integración con el juego (inicio de sesión desde Unity y reporte de partidas) están terminadas.
 
 ## Documentación por módulo
 
@@ -49,7 +49,7 @@ flowchart TB
 | Front (`ui/`) | React 19 + Vite 8 + `vite-plugin-pwa` + React Router 7 + Tailwind CSS 4 |
 | Back (`backend/`) | Django + Django REST Framework |
 | Base de datos | PostgreSQL en Supabase (solo como base de datos) |
-| Hosting | Render, un Web Service |
+| Hosting | Render, un Web Service, con el dominio `littlebearstards.com` detrás de Cloudflare |
 | CI/CD | GitHub Actions → Render |
 ## Consumo de API
 
@@ -64,13 +64,14 @@ La PWA obtiene todos sus datos de la API REST con `fetch` y rutas relativas (`/a
 | `POST /api/auth/logout/` | Sí | Cerrar sesión (solo borra el token de ese cliente) |
 | `GET /api/ranking/` | No | Lista del ranking (top 10 por puntos totales) |
 | `GET /api/yo/` | Sí | Estadísticas del jugador para el Panel |
-| `GET /api/yo/partidas/` | Sí | Historial de las últimas partidas del jugador (lista y gráfica) |
-| `POST /api/partidas/` | Sí | Lo usa el juego al terminar una partida (no la PWA) |
+| `GET /api/yo/partidas/` | Sí | Historial de las últimas 20 partidas del jugador |
+| `POST /api/partidas/` | Sí | Lo usa el juego al terminar una partida (no la PWA). El cuerpo está definido en el contrato [`backend/contratos/resultado-partida.schema.json`](backend/contratos/resultado-partida.schema.json); el juego tiene una copia idéntica |
+| `GET /api/health/` | No | Lo usan Render y el CI para saber si el servicio está arriba |
 
 ### Cómo se consumen y muestran las listas
 
 - Un solo módulo, `src/api/cliente.js`, hace todas las peticiones y agrega `Authorization: Token <token>` cuando hay sesión.
-- El **ranking** y el **historial** se piden al abrir su pantalla y se dibujan a partir del JSON recibido: podio y tabla en Ranking; tabla y gráfica en Panel.
+- El **ranking** y el **historial** se piden al abrir su pantalla y se dibujan a partir del JSON recibido: podio y tabla en Ranking; tabla en Panel.
 - Cada lista contempla tres estados: **cargando**, **vacía** (por ejemplo, un jugador sin partidas) y **error** (sin conexión o servidor caído).
 - Si la API responde `401`, el token ya no sirve: se borra la sesión y se manda al usuario a iniciar sesión.
 
@@ -150,16 +151,17 @@ flowchart LR
 | `/#/` | Inicio | Portada del juego: premisa, cómo se juega, armas, mapa de la juguetería, galería, adelanto del ranking y equipo | No |
 | `/#/ranking` | Ranking | Podio de los 3 primeros, tabla de jugadores por puntos totales, buscador por nombre y la posición del jugador con sesión iniciada | No |
 | `/#/login` | Iniciar sesión | Usuario y contraseña | No |
-| `/#/registro` | Registro | Usuario y contraseña (mínimo 8 caracteres) | No |
-| `/#/panel` | Panel | Estadísticas del jugador, gráfica de puntos de sus últimas 10 partidas e historial de partidas | Sí |
+| `/#/registro` | Registro | Usuario, correo (para el correo de bienvenida) y contraseña (mínimo 8 caracteres) | No |
+| `/#/panel` | Panel | Estadísticas del jugador e historial de sus últimas 20 partidas | Sí |
+| `/#/laboratorio` | Laboratorio | Interfaz mínima del laboratorio de pruebas: consulta y envía datos a la API | No |
 
 **Datos que muestra cada pantalla**
 
 - **Ranking:** usuario, puntos totales, victorias, derrotas, empates y kills.
 - **Panel, estadísticas:** partidas, victorias, derrotas, empates, kills, puntos totales y mejor puntuación.
-- **Panel, historial y gráfica:** por partida, la fecha, los puntos, las kills, el resultado (victoria, derrota o empate) y si fue por abandono.
+- **Panel, historial:** por partida, la fecha, los puntos, las kills, el resultado (victoria, derrota o empate) y si fue por abandono.
 
-La PWA solo muestra los datos de la sección *Datos que maneja*. No se piden ni se guardan correos, rachas, logros ni rankings por periodo.
+La PWA solo muestra los datos de la sección *Datos que maneja*. El correo solo se usa para la bienvenida: la PWA lo pide al registrarse y en la API es opcional (el juego no lo pide). No se guardan rachas, logros ni rankings por periodo.
 
 - Se usa `HashRouter`: las rutas van después del `#`, así Django solo tiene que servir `index.html`.
 - Si alguien entra a `/#/panel` sin sesión, se le manda a iniciar sesión.
@@ -186,12 +188,16 @@ flowchart LR
 
 ```
 ui/src/
-├── api/            # cliente.js: todas las llamadas a /api/
-├── auth/           # contexto de sesión (token, jugador, login, registro, logout)
-├── components/     # piezas reutilizables: Navbar, Footer, Hero, Bear, Icons,
-│                   # secciones de Inicio, ProtectedRoute, ui.js (estilos de botones e inputs)
-├── pages/          # una pantalla por archivo: Home, Ranking, Login, Register, Panel
-├── assets/         # logos e imágenes de los osos
+├── api/            # cliente.js: todas las llamadas a /api/ y la sesión guardada;
+│                   # useApi.js y useSesion.js: hooks para pedir datos y leer la sesión
+├── components/     # piezas reutilizables: Header, Footer, Oso, Ola, Titulo, Reveal, EstadoCarga,
+│   ├── cuenta/     # formulario y tarjeta de login y registro
+│   ├── inicio/     # secciones de Inicio (Hero, Premisa, Armas, Juguetería, Galería, Equipo…)
+│   ├── ranking/    # Podio y TablaRanking
+│   └── ui.js       # estilos de botones e inputs
+├── pages/          # una pantalla por archivo: Home, Ranking, Login, Registro, Panel, Laboratorio
+├── datos/          # formato.js: números y fechas
+├── assets/         # fuentes, imágenes WebP de los osos y SVG
 ├── index.css       # tokens de diseño (colores, fuentes, sombras, animaciones)
 ├── App.jsx         # rutas
 └── main.jsx        # punto de entrada
@@ -283,10 +289,12 @@ erDiagram
     JUGADOR ||--o{ PARTICIPACION : "juega"
     PARTIDA ||--|{ PARTICIPACION : "tiene 2"
     JUGADOR ||--o{ PARTIDA : "reporta"
+    JUGADOR ||--o{ TOKEN_CLIENTE : "inicia sesión"
 
     JUGADOR {
         int id PK
         string username
+        string email "opcional"
         string password "con hash"
         int partidas
         int victorias
@@ -312,6 +320,12 @@ erDiagram
         string resultado "victoria, derrota o empate"
         bool abandono
     }
+    TOKEN_CLIENTE {
+        string key PK
+        int jugador FK
+        string cliente "web o juego"
+        datetime creado
+    }
 ```
 
 **Jugador**
@@ -331,12 +345,16 @@ erDiagram
 - Resultado: victoria, derrota o empate.
 - Si abandonó.
 
+**Token por cliente** (la sesión)
+- Uno por jugador y por cliente (`web` o `juego`): cerrar sesión en uno no cierra el otro.
+
 ### Reglas del juego que respetan los datos
 
-- Todas las partidas duran 10 minutos.
+- Las partidas son 1 contra 1 y duran 3 minutos con 10 segundos.
 - Gana quien tenga más puntos; si quedan iguales, es empate.
-- Los puntos de una partida pueden ser 0 o negativos: golpear a un NPC resta 50. Por eso los puntos totales y la mejor puntuación también pueden ser negativos.
-- Quien abandona pierde automáticamente.
+- Eliminar al rival da puntos (200 con la aguja, 400 con la pistola de dardos) y suma una kill. Las kills solo cuentan rivales, no NPCs.
+- Los puntos de una partida pueden ser 0 o negativos: eliminar a un NPC resta 100. Por eso los puntos totales y la mejor puntuación también pueden ser negativos.
+- Quien abandona (sale desde el menú de pausa, cierra el juego o se desconecta) pierde automáticamente.
 - El juego envía los datos solo al terminar la partida, y cada partida se registra una sola vez.
 
 ### Cómo llegan los datos desde el juego
@@ -348,15 +366,15 @@ sequenceDiagram
     participant API as API Django
     participant DB as Supabase
 
-    A->>API: Iniciar sesión
-    B->>API: Iniciar sesión
-    Note over A,B: Partida 1v1 de 10 minutos (Photon)
-    A->>B: Reporte final (mismo para los dos)
+    A->>API: Iniciar sesión (cliente: juego)
+    B->>API: Iniciar sesión (cliente: juego)
+    Note over A,B: Partida 1v1 (Photon). Los dos arman el mismo<br/>reporte con los datos de la sala
     A->>API: POST /api/partidas/
     API->>DB: Guarda la partida y suma estadísticas
     API-->>A: 201 Creada
     B->>API: POST /api/partidas/ (mismo reporte)
-    API-->>B: 409 Ya registrada
+    API-->>B: 409 Ya registrada (cuenta como guardada)
+    Note over A,B: Sin conexión, el reporte queda en una cola local<br/>y se reintenta al volver a iniciar sesión
 ```
 
 ## Requisitos del MVP (IDGS101N)
@@ -401,7 +419,7 @@ Corren **siempre** en los PR hacia `main` o `development` y en los push a esas r
 | Check | Qué revisa |
 |---|---|
 | `Frontend CI / lint-and-build` | En `ui/`: `npm ci`, `npm run lint` y `npm run build` con Node 22. Guarda el build como artefacto por 7 días. |
-| `Backend CI / lint-and-test` | En `backend/`: `ruff check`, que no falten migraciones (`makemigrations --check`) y `manage.py test`, contra un PostgreSQL temporal. Mientras no exista `backend/manage.py`, termina en verde sin hacer nada. |
+| `Backend CI / lint-and-test` | En `backend/`: `ruff check`, que no falten migraciones (`makemigrations --check`) y `manage.py test` (28 tests), contra un PostgreSQL temporal. |
 | `Docker CI / build-and-smoke-test` | Construye la imagen con el `Dockerfile`, la arranca como en Render (`PORT=10000`) contra un PostgreSQL temporal y revisa que respondan `/api/health/` y la PWA. |
 
 - El CI **nunca se conecta a Supabase**: usa su propia base de datos desechable, así que los tests no tocan datos reales.
