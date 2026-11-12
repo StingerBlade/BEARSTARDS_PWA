@@ -170,7 +170,7 @@ flowchart LR
 - **Panel, estadísticas:** partidas, victorias, derrotas, empates, kills, puntos totales y mejor puntuación.
 - **Panel, historial:** por partida, la fecha, los puntos, las kills, el resultado (victoria, derrota o empate) y si fue por abandono.
 
-La PWA solo muestra los datos de la sección *Datos que maneja*. El correo solo se usa para la bienvenida: la PWA lo pide al registrarse y en la API es opcional (el juego no lo pide). No se guardan rachas, logros ni rankings por periodo.
+La PWA solo muestra los datos de la sección *Datos que maneja*. El correo solo se usa para la bienvenida y para recuperar la contraseña: la PWA lo pide al registrarse y en la API es opcional (el juego no lo pide). No se guardan rachas, logros ni rankings por periodo.
 
 - Se usa `HashRouter`: las rutas van después del `#`, así Django solo tiene que servir `index.html`.
 - Si alguien entra a `/#/panel` sin sesión, se le manda a iniciar sesión.
@@ -428,7 +428,7 @@ Corren **siempre** en los PR hacia `main` o `development` y en los push a esas r
 | Check | Qué revisa |
 |---|---|
 | `Frontend CI / lint-and-build` | En `ui/`: `npm ci`, `npm run lint` y `npm run build` con Node 22. Guarda el build como artefacto por 7 días. |
-| `Backend CI / lint-and-test` | En `backend/`: `ruff check`, que no falten migraciones (`makemigrations --check`) y `manage.py test` (28 tests), contra un PostgreSQL temporal. |
+| `Backend CI / lint-and-test` | En `backend/`: `ruff check`, que no falten migraciones (`makemigrations --check`) y `manage.py test` (35 tests), contra un PostgreSQL temporal. |
 | `Docker CI / build-and-smoke-test` | Construye la imagen con el `Dockerfile`, la arranca como en Render (`PORT=10000`) contra un PostgreSQL temporal y revisa que respondan `/api/health/` y la PWA. |
 
 - El CI **nunca se conecta a Supabase**: usa su propia base de datos desechable, así que los tests no tocan datos reales.
