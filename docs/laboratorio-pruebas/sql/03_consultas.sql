@@ -19,7 +19,8 @@ FROM jugador
 ORDER BY id DESC;
 
 -- 3. Tokens de sesión: registrarse crea uno para el usuario nuevo
-SELECT user_id, created FROM authtoken_token;
+--    (uno por cliente: 'web' desde la PWA, 'juego' desde Unity)
+SELECT jugador_id, cliente, creado FROM token_cliente ORDER BY creado;
 
 -- 4. Ranking: lo mismo que devuelve GET /api/ranking/
 SELECT username, puntos_totales

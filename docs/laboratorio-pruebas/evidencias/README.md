@@ -195,7 +195,7 @@ El registro es la petición más lenta porque el hash de la contraseña (PBKDF2)
 ## Parte 6 · Tests automáticos
 
 ### Paso 15 · Correr los tests del backend
-Además de las pruebas manuales, el backend tiene 16 tests automáticos en `backend/jugadores/tests.py`. Se ejecutaron desde `backend/`, con el entorno virtual activo:
+Además de las pruebas manuales, el backend tiene 28 tests automáticos en `backend/jugadores/tests.py`. Se ejecutaron desde `backend/`, con el entorno virtual activo:
 
     python manage.py test
 
@@ -203,9 +203,16 @@ Django crea una base de datos temporal, corre los tests y la borra al terminar, 
 
 Antes de correr, cada test imprime un separador con su nombre (`--------------- TEST: test_empate ---------------`), así en la captura se ve qué log pertenece a cada test.
 
-**Resultado:** `Ran 16 tests` y `OK`.
+**Resultado:** `Ran 28 tests` y `OK`.
 
-Los 16 tests, por grupo:
+Para tomar la captura de un solo grupo o de un solo test:
+
+    python manage.py test jugadores.tests.TokenPorClienteTests
+    python manage.py test jugadores.tests.ReportarPartidaTests.test_abandono_valido_suma_estadisticas
+
+Los tests 1 a 16 son los del laboratorio original. Los 17 a 28 se agregaron con la integración del juego: tokens por cliente, abandono de partida y el contrato JSON del resultado.
+
+Los 28 tests, por grupo:
 
 **Grupo 1 · `RegistroLoginTests`: cuentas y sesiones**
 
@@ -237,6 +244,31 @@ Antes de cada test se crean dos jugadores (`oso_rojo` y `oso_azul`) y se inicia 
 15. **`test_mejor_puntuacion_no_baja_con_una_partida_negativa`**: una partida con puntos negativos resta del total, pero **no baja la mejor puntuación** del jugador.
 16. **`test_mis_partidas_devuelve_historial`**: después de una partida, `/api/yo/partidas/` devuelve el historial del jugador con su resultado.
 
+**Grupo 5 · `TokenPorClienteTests`: la web y el juego con sesiones separadas**
+
+Cada cuenta tiene un token por cliente (`web` o `juego`), así cerrar sesión en uno no cierra el otro.
+
+17. **`test_web_y_juego_tienen_tokens_distintos`**: iniciar sesión como `web` y como `juego` da **dos tokens distintos**, y los dos sirven para `/api/yo/`.
+18. **`test_logout_del_juego_no_cierra_la_web`**: cerrar sesión en el juego borra solo su token; el de la web **sigue funcionando**.
+19. **`test_logout_de_la_web_no_cierra_el_juego`**: lo mismo al revés: cerrar sesión en la web no saca al juego.
+20. **`test_mismo_cliente_reutiliza_el_token`**: iniciar sesión dos veces con el mismo cliente devuelve **el mismo token**.
+21. **`test_cliente_invalido_da_400`**: un `cliente` que no es `web` ni `juego` responde **400**, tanto en login como en registro, y no crea la cuenta.
+22. **`test_sin_cliente_se_asume_web`**: si no se manda `cliente`, se toma como `web` (así la PWA no tuvo que cambiar).
+23. **`test_registro_desde_el_juego`**: registrarse desde el juego (`cliente: "juego"`) responde **201** y crea el token del juego.
+
+**Grupo 4 (continuación) · `ReportarPartidaTests`: partidas por abandono**
+
+24. **`test_abandono_valido_suma_estadisticas`**: una partida por abandono (quien se va pierde) responde **201**, marca la partida y la participación como abandono, y suma victoria al que se quedó y derrota al que se fue.
+25. **`test_abandonos_incoherentes_dan_400`**: responde **400** y no guarda nada si dice `por_abandono` pero nadie abandonó, si quien abandonó aparece como ganador, o si hay un abandono sin `por_abandono`.
+
+**Grupo 6 · `ContratoResultadoTests`: el JSON que manda el juego**
+
+El cuerpo de `POST /api/partidas/` está definido en `backend/contratos/resultado-partida.schema.json`; el juego tiene una copia idéntica.
+
+26. **`test_el_esquema_es_valido`**: el archivo del contrato es un JSON Schema (2020-12) válido.
+27. **`test_el_ejemplo_cumple_el_esquema_y_la_api_lo_acepta`**: el ejemplo del contrato cumple el esquema y la API lo guarda con **201**.
+28. **`test_resultado_con_campos_faltantes_da_400`**: si falta cualquier campo obligatorio, el esquema lo rechaza y la API responde **400**, sin guardar ninguna partida.
+
 Los mismos tests corren solos en GitHub Actions (*Backend CI / lint-and-test*) en cada push y Pull Request, contra un PostgreSQL 16 temporal.
 
 ![Tests del backend](24-tests.png)
@@ -255,4 +287,4 @@ Los mismos tests corren solos en GitHub Actions (*Backend CI / lint-and-test*) e
 | Modo offline | La app y el ranking funcionan sin conexión | 7, 11 |
 | Sincronización offline/online | El registro sin red se envió solo al volver la conexión | 12 |
 | Respuesta del backend | Tiempo, tamaños, memoria y consultas SQL de cada petición | 14 |
-| Reglas del backend con tests automáticos | 16 tests en verde (`Ran 16 tests … OK`) | 15 |
+| Reglas del backend con tests automáticos | 28 tests en verde (`Ran 28 tests … OK`) | 15 |
