@@ -156,8 +156,13 @@ flowchart LR
 | `/#/ranking` | Ranking | Podio de los 3 primeros, tabla de jugadores por puntos totales, buscador por nombre y la posición del jugador con sesión iniciada | No |
 | `/#/login` | Iniciar sesión | Usuario y contraseña | No |
 | `/#/registro` | Registro | Usuario, correo (para el correo de bienvenida) y contraseña (mínimo 8 caracteres) | No |
-| `/#/panel` | Panel | Estadísticas del jugador e historial de sus últimas 20 partidas | Sí |
+| `/#/panel` | Panel | Estadísticas del jugador, historial de sus últimas 20 partidas y opción para eliminar la cuenta | Sí |
 | `/#/laboratorio` | Laboratorio | Interfaz mínima del laboratorio de pruebas: consulta y envía datos a la API | No |
+| `/#/recuperar` | Recuperar contraseña | Pide el correo para mandar el enlace | No |
+| `/#/restablecer` | Restablecer contraseña | Nueva contraseña, desde el enlace del correo | No |
+| `/#/privacidad` | Aviso de privacidad | Qué datos se guardan y cómo ejercer los derechos ARCO | No |
+| `/#/terminos` | Términos y condiciones | Reglas de uso de la web y del juego | No |
+| `/#/cuenta-eliminada` | Cuenta eliminada | Confirmación después de eliminar la cuenta desde el Panel | No |
 
 **Datos que muestra cada pantalla**
 
