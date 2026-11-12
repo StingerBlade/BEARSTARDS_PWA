@@ -113,7 +113,7 @@ export default function ComoSeJuega() {
           </div>
           <img src={vidaHilo} alt="" className="mx-auto mt-8 h-auto w-full max-w-xs" />
           <p className="mt-4 text-center text-paper/80">
-            La partida dura 10 minutos. Al caer, reapareces con 100 de vida y la pelea continúa. Cuando se acaba el
+            La partida dura 3 minutos con 10 segundos. Al caer, reapareces con 100 de vida y la pelea continúa. Cuando se acaba el
             tiempo, gana quien tenga más puntos; si quedan iguales, es empate.
           </p>
         </Reveal>
