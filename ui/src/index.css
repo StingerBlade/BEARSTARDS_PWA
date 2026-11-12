@@ -37,6 +37,7 @@
   --animate-marquee: marquee 50s linear infinite;
   --animate-wiggle: wiggle 2.4s ease-in-out infinite;
   --animate-twinkle: twinkle 3s ease-in-out infinite;
+  --animate-bajar: bajar 1.6s ease-in-out infinite;
 
   @keyframes bob {
     50% { transform: translateY(-10px); }
@@ -50,6 +51,11 @@
   }
   @keyframes twinkle {
     50% { opacity: 0.25; transform: scale(0.7); }
+  }
+  /* Flecha que "empuja" hacia abajo para invitar a hacer scroll */
+  @keyframes bajar {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(9px); }
   }
 }
 
@@ -83,6 +89,54 @@
   .bg-paper :focus-visible,
   .bg-white :focus-visible {
     outline-color: var(--color-ink);
+  }
+
+  /* Scrollbar con el estilo del sitio: gruesa, amarilla y con borde, para que se note
+     que la página sigue. Chrome, Edge y Safari usan ::-webkit-scrollbar; Firefox,
+     scrollbar-color (si Chrome viera scrollbar-color ignoraría el estilo de abajo). */
+  /* Contenedores internos (tablas, menús): la misma idea, más delgada */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-ink);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-sun);
+    border: 2px solid var(--color-ink);
+    border-radius: 999px;
+  }
+  /* La de la página: gruesa y con protagonismo (según el navegador la toma de html o de body) */
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    width: 18px;
+  }
+  html::-webkit-scrollbar-track,
+  body::-webkit-scrollbar-track {
+    border-radius: 0;
+    border-left: 3px solid var(--color-night-3);
+  }
+  html::-webkit-scrollbar-thumb,
+  body::-webkit-scrollbar-thumb {
+    min-height: 72px;
+    border-width: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-tangerine);
+  }
+  ::-webkit-scrollbar-thumb:active {
+    background: var(--color-pink);
+  }
+  ::-webkit-scrollbar-corner {
+    background: var(--color-ink);
+  }
+  @supports not selector(::-webkit-scrollbar) {
+    html {
+      scrollbar-color: var(--color-sun) var(--color-ink);
+      scrollbar-width: auto;
+    }
   }
 }
 

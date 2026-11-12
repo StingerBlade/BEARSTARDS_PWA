@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light only">
+  <title>Restablece tu contraseña</title>
+</head>
+{# Misma paleta que la bienvenida: ink #1b1030 · night #241a55 · paper #fffaf0 · sun #ffd23f #}
+<body style="margin:0; padding:0; background:#ece8f4;">
+  <div style="display:none; max-height:0; overflow:hidden; opacity:0;">
+    Elige una contraseña nueva para tu cuenta de Little Bearstards.
+  </div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ece8f4;">
+    <tr>
+      <td align="center" style="padding:24px 12px;">
+        <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="width:100%; max-width:560px; background:#fffaf0; border:3px solid #1b1030; border-right-width:8px; border-bottom-width:8px; border-radius:24px;">
+          <tr>
+            <td style="padding:32px 32px 28px; font-family:'Trebuchet MS', Arial, sans-serif; color:#1b1030; font-size:16px; line-height:1.6;">
+              <h1 style="margin:0 0 16px; font-family:'Arial Black', Arial, sans-serif; font-size:28px; line-height:1.15;">Restablece tu contraseña</h1>
+              <p style="margin:0 0 14px;">Hola, <strong>{{ jugador.username }}</strong>:</p>
+              <p style="margin:0 0 22px;">Recibimos una solicitud para restablecer la contraseña de tu cuenta de Little Bearstards. Para elegir una nueva, presiona el botón:</p>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 22px;">
+                <tr>
+                  <td style="background:#ffd23f; border:3px solid #1b1030; border-right-width:5px; border-bottom-width:5px; border-radius:999px;">
+                    <a href="{{ enlace }}" style="display:inline-block; padding:12px 28px; font-family:'Arial Black', Arial, sans-serif; font-size:17px; color:#1b1030; text-decoration:none;">Elegir contraseña nueva</a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:0 0 14px; font-size:14px;">El enlace vence en <strong>{{ horas }} horas</strong> y solo sirve una vez. Al cambiar la contraseña se cerrará tu sesión en el sitio y en el juego.</p>
+              <p style="margin:0 0 14px; font-size:14px;">Si el botón no funciona, copia este enlace en tu navegador:<br><a href="{{ enlace }}" style="color:#1b1030; word-break:break-all;">{{ enlace }}</a></p>
+              <p style="margin:0; font-size:14px; color:#5a4f72;">Si no pediste este cambio, ignora este correo: tu contraseña seguirá igual.</p>
+            </td>
+          </tr>
+        </table>
+        <p style="margin:16px 0 0; font-family:'Trebuchet MS', Arial, sans-serif; font-size:12px; color:#5a4f72;">Turbo Studios · <a href="{{ sitio }}" style="color:#5a4f72;">{{ sitio }}</a></p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

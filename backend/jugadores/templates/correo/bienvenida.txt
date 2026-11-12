@@ -10,7 +10,5 @@ Solo hay lugar para uno: el ganador se vende y el perdedor va al incinerador.
 
 Ver el ranking: {{ sitio }}/#/ranking
 
-La tienda cierra el 20 de noviembre. Primera versión jugable: 13 de noviembre de 2026.
-
 Recibes este correo porque creaste la cuenta {{ jugador.username }} en littlebearstards.com. Si no fuiste tú, ignóralo.
 Turbo Studios

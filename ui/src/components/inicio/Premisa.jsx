@@ -18,7 +18,7 @@ const TARJETAS = [
     color: 'bg-sky',
     r: 1.5,
     titulo: 'Duelo 1v1 en línea',
-    texto: 'Dos jugadores, cada uno en su computadora. Partidas de 10 minutos con reaparición: gana quien junte más puntos.',
+    texto: 'Dos jugadores, cada uno en su computadora. Partidas de poco más de 3 minutos con reaparición: gana quien junte más puntos.',
   },
   {
     icono: armas,

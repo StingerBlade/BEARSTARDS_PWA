@@ -3,12 +3,18 @@ import { HashRouter, Outlet, Route, Routes, useLocation } from 'react-router-dom
 import Footer from './components/Footer'
 import Header from './components/Header'
 import Pendiente from './components/Pendiente'
+import ProgresoScroll from './components/ProgresoScroll'
+import CuentaEliminada from './pages/CuentaEliminada'
 import Home from './pages/Home'
 import Laboratorio from './pages/Laboratorio'
 import Login from './pages/Login'
 import Panel from './pages/Panel'
+import Privacidad from './pages/Privacidad'
 import Ranking from './pages/Ranking'
+import Recuperar from './pages/Recuperar'
 import Registro from './pages/Registro'
+import Restablecer from './pages/Restablecer'
+import Terminos from './pages/Terminos'
 // Al cambiar de pantalla se empieza arriba
 function AlInicio() {
   const { pathname } = useLocation()
@@ -31,6 +37,7 @@ function Layout() {
       >
         Saltar al contenido
       </a>
+      <ProgresoScroll />
       <Header />
       <main id="contenido" tabIndex={-1} className="outline-none">
         <Outlet />
@@ -52,6 +59,11 @@ export default function App() {
           <Route path="registro" element={<Registro />} />
           <Route path="panel" element={<Panel />} />
           <Route path="laboratorio" element={<Laboratorio />} />
+          <Route path="privacidad" element={<Privacidad />} />
+          <Route path="terminos" element={<Terminos />} />
+          <Route path="recuperar" element={<Recuperar />} />
+          <Route path="restablecer" element={<Restablecer />} />
+          <Route path="cuenta-eliminada" element={<CuentaEliminada />} />
           <Route path="*" element={<Pendiente titulo="Página no encontrada" />} />
         </Route>
       </Routes>
