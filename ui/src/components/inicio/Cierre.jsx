@@ -19,9 +19,6 @@ export default function Cierre() {
           <Link to="/registro" className={boton('sun')}>
             Crear cuenta
           </Link>
-          <span aria-disabled="true" className={boton('ink', 'pointer-events-none opacity-70')}>
-            Steam · próximamente
-          </span>
         </div>
       </Reveal>
     </section>
