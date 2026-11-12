@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import Documento from '../components/legal/Documento'
 import { CORREO, DOMICILIO, EDAD_MINIMA, INTEGRANTES, RESPONSABLE, SERVICIO, SITIO } from '../legal/datos'
 
@@ -159,7 +160,25 @@ const secciones = [
           inexactos o incompletos, <strong>Cancelarlos</strong> cuando consideres que no se requieren para las
           finalidades señaladas, y <strong>Oponerte</strong> a su tratamiento para fines específicos (derechos ARCO).
         </p>
-        <p>Para ejercerlos, envía una solicitud a <Correo /> que contenga:</p>
+        <p>Algunos derechos los puedes ejercer tú mismo, sin enviar una solicitud:</p>
+        <ul>
+          <li>
+            <strong>Acceso:</strong> en <Link to="/panel" className="font-bold underline underline-offset-4">Mi panel</Link>{' '}
+            ves tus estadísticas y tu historial de partidas.
+          </li>
+          <li>
+            <strong>Cancelación:</strong> en Mi panel, con la opción <em>Eliminar cuenta</em>, confirmando con tu
+            contraseña. Se aplica de inmediato.
+          </li>
+          <li>
+            <strong>Contraseña olvidada:</strong> en{' '}
+            <Link to="/recuperar" className="font-bold underline underline-offset-4">
+              ¿Olvidaste tu contraseña?
+            </Link>{' '}
+            recibes en tu correo un enlace para elegir una nueva, que vence en 2 horas.
+          </li>
+        </ul>
+        <p>Para cualquier otro caso, o si no puedes iniciar sesión, envía una solicitud a <Correo /> que contenga:</p>
         <ol>
           <li>Tu nombre de jugador y el correo electrónico asociado a tu cuenta.</li>
           <li>

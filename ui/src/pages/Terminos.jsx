@@ -75,8 +75,8 @@ const secciones = [
           <li>Tu cuenta es personal e intransferible; no puedes venderla, prestarla ni compartirla.</li>
           <li>
             Eres responsable de mantener la confidencialidad de tu contraseña y de toda la actividad realizada con tu
-            cuenta. Si sospechas un acceso no autorizado, cierra sesión en tus dispositivos y escríbenos de inmediato a{' '}
-            <Correo /> para proteger tu cuenta.
+            cuenta. Si sospechas un acceso no autorizado, restablece tu contraseña: al hacerlo se cierran tus sesiones en
+            el sitio y en el juego. También puedes escribirnos a <Correo />.
           </li>
           <li>
             Tu nombre de jugador es público. No puede ser ofensivo, discriminatorio, de contenido sexual, suplantar a otra
@@ -84,8 +84,8 @@ const secciones = [
             cuenta si incumple esta regla.
           </li>
           <li>
-            Puedes solicitar el cierre de tu cuenta en cualquier momento escribiendo a <Correo />, conforme al
-            procedimiento del <Aviso />.
+            Puedes eliminar tu cuenta en cualquier momento desde Mi panel, o solicitarlo escribiendo a <Correo />, conforme
+            al <Aviso />. Si olvidas tu contraseña, puedes restablecerla con el correo asociado a tu cuenta.
           </li>
         </ul>
       </>

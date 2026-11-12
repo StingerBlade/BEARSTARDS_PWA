@@ -3,8 +3,11 @@ from email.mime.image import MIMEImage
 from pathlib import Path
 
 from django.conf import settings
+from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 
 logger = logging.getLogger("bearstards.correo")
 
@@ -37,4 +40,32 @@ def enviar_bienvenida(jugador):
         logger.exception("No se pudo enviar la bienvenida: id=%s", jugador.id)
         return False
     logger.info("Bienvenida enviada: id=%s", jugador.id)
+    return True
+
+
+def enviar_recuperacion(jugador):
+    """Manda el enlace para restablecer la contraseña. Si falla, solo se registra."""
+    uid = urlsafe_base64_encode(force_bytes(jugador.pk))
+    token = default_token_generator.make_token(jugador)
+    sitio = settings.SITIO_URL.rstrip("/")
+    contexto = {
+        "jugador": jugador,
+        "sitio": sitio,
+        "enlace": f"{sitio}/#/restablecer?uid={uid}&token={token}",
+        "horas": settings.PASSWORD_RESET_TIMEOUT // 3600,
+    }
+    correo = EmailMultiAlternatives(
+        subject="Restablece tu contraseña de Little Bearstards",
+        body=render_to_string("correo/recuperar.txt", contexto),
+        to=[jugador.email],
+    )
+    correo.attach_alternative(
+        render_to_string("correo/recuperar.html", contexto), "text/html"
+    )
+    try:
+        correo.send()
+    except Exception:
+        logger.exception("No se pudo enviar la recuperación: id=%s", jugador.id)
+        return False
+    logger.info("Recuperación enviada: id=%s", jugador.id)
     return True

@@ -168,6 +168,9 @@ DEFAULT_FROM_EMAIL = os.environ.get(
 # Para los enlaces de los correos
 SITIO_URL = os.environ.get("SITIO_URL", "https://littlebearstards.com")
 
+# El enlace para restablecer la contraseña vence a las 2 horas (Django usa 3 días)
+PASSWORD_RESET_TIMEOUT = 60 * 60 * 2
+
 # Logs: solo por consola. En Render se ven en el panel del servicio (Logs),
 # que los conserva 7 días en un workspace Hobby. El disco de Render se borra
 # en cada deploy o reinicio, así que no se escriben archivos.

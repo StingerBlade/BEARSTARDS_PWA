@@ -4,6 +4,7 @@ import { useApi } from '../api/useApi'
 import { useSesion } from '../api/useSesion'
 import sinPartidas from '../assets/img/empty-state-saved.webp'
 import EstadoCarga from '../components/EstadoCarga'
+import EliminarCuenta from '../components/cuenta/EliminarCuenta'
 import Reveal from '../components/Reveal'
 import { boton, chip } from '../components/ui'
 import { fecha, numero } from '../datos/formato'
@@ -147,6 +148,8 @@ function Contenido() {
           Tus últimas <span className="text-sun text-outline">partidas.</span>
         </h2>
         <Historial consulta={partidas} />
+
+        <EliminarCuenta />
       </div>
     </div>
   )

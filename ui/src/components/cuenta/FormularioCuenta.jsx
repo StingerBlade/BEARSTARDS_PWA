@@ -239,9 +239,15 @@ export default function FormularioCuenta({ tipo }) {
             <Ojo tachado={verPass} />
           </button>
         </div>
-        {registro && (
+        {registro ? (
           <p id={`${ids.password}-ayuda`} className="mt-1.5 text-sm text-ink/70">
             Mínimo 8 caracteres.
+          </p>
+        ) : (
+          <p className="mt-2 text-right text-sm">
+            <Link to="/recuperar" className="font-bold underline underline-offset-4 hover:text-pink">
+              ¿Olvidaste tu contraseña?
+            </Link>
           </p>
         )}
         <ErrorCampo id={`${ids.password}-err`} mensaje={errores.password} />
