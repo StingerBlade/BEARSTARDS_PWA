@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import render from '../../assets/img/render-menu.webp'
 import { boton } from '../ui'
 
@@ -9,6 +9,15 @@ const conMouse = () =>
 export default function Hero({ irA }) {
   const seccion = useRef(null)
   const imagen = useRef(null)
+  // La invitación a bajar se esconde en cuanto la persona empieza a hacer scroll
+  const [bajo, setBajo] = useState(false)
+
+  useEffect(() => {
+    const alMover = () => setBajo(window.scrollY > 80)
+    alMover()
+    window.addEventListener('scroll', alMover, { passive: true })
+    return () => window.removeEventListener('scroll', alMover)
+  }, [])
 
   function alMover(e) {
     if (!conMouse()) return
@@ -25,7 +34,7 @@ export default function Hero({ irA }) {
       ref={seccion}
       onPointerMove={alMover}
       aria-label="Little Bearstards"
-      className="relative isolate grid min-h-svh items-center overflow-hidden bg-[#150d3a]"
+      className="relative isolate grid min-h-[calc(100svh-3.25rem)] items-center overflow-hidden bg-[#150d3a]"
       style={{ '--mx': '50%', '--my': '40%' }}
     >
       <div aria-hidden="true" className="absolute inset-0 overflow-hidden">
@@ -74,6 +83,26 @@ export default function Hero({ irA }) {
           Mueve el mouse: la linterna también busca. Uno de esos osos no es un NPC.
         </p>
       </div>
+
+      {/* Invitación a bajar: lleva a la primera sección y desaparece al hacer scroll */}
+      <button
+        type="button"
+        onClick={() => irA('juego')}
+        tabIndex={bajo ? -1 : 0}
+        aria-hidden={bajo}
+        className={`group absolute bottom-10 left-1/2 z-[3] flex -translate-x-1/2 cursor-pointer flex-col items-center gap-1.5 transition-opacity duration-500 max-sm:bottom-14 ${
+          bajo ? 'pointer-events-none opacity-0' : 'opacity-100'
+        }`}
+      >
+        <span className="rounded-full border-[3px] border-ink bg-ink/80 px-4 py-1 font-display text-sm tracking-[0.2em] whitespace-nowrap text-paper uppercase shadow-toon-sm transition-colors group-hover:bg-sun group-hover:text-ink">
+          Desliza para descubrir
+        </span>
+        <span className="grid size-12 animate-bajar place-items-center rounded-full border-[3px] border-ink bg-sun text-ink shadow-toon-sm">
+          <svg viewBox="0 0 24 24" aria-hidden="true" className="size-7" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </span>
+      </button>
     </section>
   )
 }
