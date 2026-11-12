@@ -40,9 +40,8 @@ const DELATA = [
 
 const PUNTOS = [
   { valor: '+200', texto: 'Eliminación', color: 'bg-sun' },
-  { valor: '+350', texto: 'Eliminación sigilosa', color: 'bg-mint' },
   { valor: '+400', texto: 'Eliminación con dardos', color: 'bg-sky' },
-  { valor: '−50', texto: 'Golpear a un NPC', color: 'bg-pink' },
+  { valor: '−100', texto: 'Eliminar a un NPC', color: 'bg-pink' },
 ]
 
 export default function ComoSeJuega() {
@@ -104,7 +103,7 @@ export default function ComoSeJuega() {
 
         <Reveal className="toon-lg mt-14 rounded-[2rem] bg-night p-6 text-paper sm:p-10">
           <h3 className="mb-6 text-center text-3xl text-sun sm:text-4xl">Sistema de puntos</h3>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-5 sm:grid-cols-3">
             {PUNTOS.map((p) => (
               <div key={p.texto} className={`toon-sm rounded-2xl p-5 text-center text-ink ${p.color}`}>
                 <strong className="block font-display text-5xl sm:text-6xl">{p.valor}</strong>
@@ -114,7 +113,7 @@ export default function ComoSeJuega() {
           </div>
           <img src={vidaHilo} alt="" className="mx-auto mt-8 h-auto w-full max-w-xs" />
           <p className="mt-4 text-center text-paper/80">
-            La partida dura 10 minutos. Al caer, reapareces con 100 de vida y la pelea continúa. Cuando se acaba el
+            La partida dura 3 minutos con 10 segundos. Al caer, reapareces con 100 de vida y la pelea continúa. Cuando se acaba el
             tiempo, gana quien tenga más puntos; si quedan iguales, es empate.
           </p>
         </Reveal>
