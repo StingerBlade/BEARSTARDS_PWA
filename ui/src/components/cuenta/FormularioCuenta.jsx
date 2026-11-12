@@ -1,14 +1,15 @@
 import { useId, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { api, guardarSesion } from '../../api/cliente'
 import { boton, etiqueta, input } from '../ui'
 import { Alerta, Ojo, Reloj, SinWifi } from './iconos'
+import { EDAD_MINIMA } from '../../legal/datos'
 
 const USUARIO_VALIDO = /^[\wÁÉÍÓÚáéíóúÑñ.@+-]{3,30}$/
 const CORREO_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const CAMPOS = ['username', 'email', 'password']
 
-function validar({ username, email, password }, registro) {
+function validar({ username, email, password, acepto }, registro) {
   const e = {}
   const u = username.trim()
   if (!u) e.username = 'Escribe tu nombre de jugador.'
@@ -22,6 +23,7 @@ function validar({ username, email, password }, registro) {
     const faltan = 8 - password.length
     e.password = `Te faltan ${faltan} ${faltan === 1 ? 'carácter' : 'caracteres'} (mínimo 8).`
   }
+  if (registro && !acepto) e.acepto = 'Acepta los Términos y el Aviso de privacidad para crear tu cuenta.'
   return e
 }
 
@@ -51,17 +53,18 @@ export default function FormularioCuenta({ tipo }) {
   const navigate = useNavigate()
   const resumen = useRef(null)
 
-  const [valores, setValores] = useState({ username: '', email: '', password: '' })
+  const [valores, setValores] = useState({ username: '', email: '', password: '', acepto: false })
   const [errores, setErrores] = useState({})
   const [verPass, setVerPass] = useState(false)
   const [enviando, setEnviando] = useState(false)
   // { tipo: 'cola' | 'sin-red' | 'error', texto }
   const [aviso, setAviso] = useState(null)
 
-  const ids = { username: `${id}-usuario`, email: `${id}-correo`, password: `${id}-pass` }
+  const ids = { username: `${id}-usuario`, email: `${id}-correo`, password: `${id}-pass`, acepto: `${id}-acepto` }
 
   function cambiar(e) {
-    const nuevos = { ...valores, [e.target.name]: e.target.value }
+    const valor = e.target.type === 'checkbox' ? e.target.checked : e.target.value
+    const nuevos = { ...valores, [e.target.name]: valor }
     setValores(nuevos)
     // Si el campo ya estaba en rojo, se revisa otra vez mientras escribe
     if (errores[e.target.name]) setErrores((prev) => ({ ...prev, [e.target.name]: validar(nuevos, registro)[e.target.name] }))
@@ -243,6 +246,35 @@ export default function FormularioCuenta({ tipo }) {
         )}
         <ErrorCampo id={`${ids.password}-err`} mensaje={errores.password} />
       </div>
+
+      {registro && (
+        <div className="mb-6">
+          <div className="flex items-start gap-3">
+            <input
+              id={ids.acepto}
+              name="acepto"
+              type="checkbox"
+              checked={valores.acepto}
+              onChange={cambiar}
+              aria-invalid={Boolean(errores.acepto)}
+              aria-describedby={`${ids.acepto}-err`}
+              className="mt-1 size-5 shrink-0 cursor-pointer accent-ink"
+            />
+            <label htmlFor={ids.acepto} className="text-[.95rem] leading-snug">
+              Tengo al menos {EDAD_MINIMA} años (si soy menor de 18, cuento con la autorización de mi madre, padre o tutor) y acepto los{' '}
+              <Link to="/terminos" target="_blank" className="font-bold underline underline-offset-4">
+                Términos y condiciones
+              </Link>{' '}
+              y el{' '}
+              <Link to="/privacidad" target="_blank" className="font-bold underline underline-offset-4">
+                Aviso de privacidad
+              </Link>
+              .
+            </label>
+          </div>
+          <ErrorCampo id={`${ids.acepto}-err`} mensaje={errores.acepto} />
+        </div>
+      )}
 
       <button type="submit" disabled={enviando} className={boton('sun', 'w-full')}>
         {enviando ? 'Enviando…' : registro ? 'Crear cuenta' : 'Entrar'}

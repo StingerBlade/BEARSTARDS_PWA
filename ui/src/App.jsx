@@ -7,8 +7,10 @@ import Home from './pages/Home'
 import Laboratorio from './pages/Laboratorio'
 import Login from './pages/Login'
 import Panel from './pages/Panel'
+import Privacidad from './pages/Privacidad'
 import Ranking from './pages/Ranking'
 import Registro from './pages/Registro'
+import Terminos from './pages/Terminos'
 // Al cambiar de pantalla se empieza arriba
 function AlInicio() {
   const { pathname } = useLocation()
@@ -52,6 +54,8 @@ export default function App() {
           <Route path="registro" element={<Registro />} />
           <Route path="panel" element={<Panel />} />
           <Route path="laboratorio" element={<Laboratorio />} />
+          <Route path="privacidad" element={<Privacidad />} />
+          <Route path="terminos" element={<Terminos />} />
           <Route path="*" element={<Pendiente titulo="Página no encontrada" />} />
         </Route>
       </Routes>
