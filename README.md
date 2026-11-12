@@ -63,9 +63,12 @@ La PWA obtiene todos sus datos de la API REST con `fetch` y rutas relativas (`/a
 | `POST /api/auth/registro/` | No | Crear cuenta (`cliente` opcional: `web` o `juego`); devuelve el token y el jugador |
 | `POST /api/auth/login/` | No | Iniciar sesión (`cliente` opcional: `web` o `juego`); devuelve el token y el jugador |
 | `POST /api/auth/logout/` | Sí | Cerrar sesión (solo borra el token de ese cliente) |
-| `GET /api/ranking/` | No | Lista del ranking (top 10 por puntos totales) |
+| `POST /api/auth/recuperar/` | No | Manda al correo el enlace para restablecer la contraseña; responde lo mismo exista o no la cuenta |
+| `POST /api/auth/restablecer/` | No | Cambia la contraseña con el enlace (vence en 2 horas, un solo uso) y cierra todas las sesiones |
+| `GET /api/ranking/` | No | Lista del ranking (top 10 por puntos totales, solo cuentas activas) |
 | `GET /api/yo/` | Sí | Estadísticas del jugador para el Panel |
 | `GET /api/yo/partidas/` | Sí | Historial de las últimas 20 partidas del jugador |
+| `POST /api/yo/eliminar/` | Sí | Eliminar la cuenta con la contraseña: borra correo y sesiones, y deja el nombre anónimo; las partidas se conservan para el rival |
 | `POST /api/partidas/` | Sí | Lo usa el juego al terminar una partida (no la PWA). El cuerpo está definido en el contrato [`backend/contratos/resultado-partida.schema.json`](backend/contratos/resultado-partida.schema.json); el juego tiene una copia idéntica |
 | `GET /api/health/` | No | Lo usan Render y el CI para saber si el servicio está arriba |
 
