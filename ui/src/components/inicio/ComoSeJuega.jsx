@@ -40,7 +40,6 @@ const DELATA = [
 
 const PUNTOS = [
   { valor: '+200', texto: 'Eliminación', color: 'bg-sun' },
-  { valor: '+350', texto: 'Eliminación sigilosa', color: 'bg-mint' },
   { valor: '+400', texto: 'Eliminación con dardos', color: 'bg-sky' },
   { valor: '−50', texto: 'Golpear a un NPC', color: 'bg-pink' },
 ]
