@@ -281,6 +281,25 @@ CREATE INDEX "django_session_session_key_c0390e0f_like" ON "django_session" ("se
 CREATE INDEX "django_session_expire_date_a5c62663" ON "django_session" ("expire_date");
 COMMIT;
 
+-- ---------- jugadores.0003_token_cliente ----------
+BEGIN;
+--
+-- Create model TokenCliente
+--
+CREATE TABLE "token_cliente" ("key" varchar(40) NOT NULL PRIMARY KEY, "cliente" varchar(5) NOT NULL, "creado" timestamp with time zone NOT NULL, "jugador_id" bigint NOT NULL, CONSTRAINT "uniq_token_jugador_cliente" UNIQUE ("jugador_id", "cliente"));
+ALTER TABLE "token_cliente" ADD CONSTRAINT "token_cliente_jugador_id_5a77bbc8_fk_jugador_id" FOREIGN KEY ("jugador_id") REFERENCES "jugador" ("id") DEFERRABLE INITIALLY DEFERRED;
+CREATE INDEX "token_cliente_key_5ab2367a_like" ON "token_cliente" ("key" varchar_pattern_ops);
+CREATE INDEX "token_cliente_jugador_id_5a77bbc8" ON "token_cliente" ("jugador_id");
+COMMIT;
+
+-- ---------- jugadores.0004_copiar_tokens_drf ----------
+BEGIN;
+--
+-- Raw Python operation
+--
+-- THIS OPERATION CANNOT BE WRITTEN AS SQL
+COMMIT;
+
 -- Registro de migraciones: así Django sabe que el esquema ya está aplicado
 -- y 'migrate' no intenta volver a crear las tablas.
 CREATE TABLE IF NOT EXISTS django_migrations (
@@ -313,4 +332,6 @@ INSERT INTO django_migrations (app, name, applied) VALUES
     ('authtoken', '0003_tokenproxy', now()),
     ('authtoken', '0004_alter_tokenproxy_options', now()),
     ('jugadores', '0002_puntos_pueden_ser_negativos', now()),
+    ('jugadores', '0003_token_cliente', now()),
+    ('jugadores', '0004_copiar_tokens_drf', now()),
     ('sessions', '0001_initial', now());

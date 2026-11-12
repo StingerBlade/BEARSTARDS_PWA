@@ -397,15 +397,18 @@ class ContratoResultadoTests(APITestCase):
         return datos
 
     def test_el_esquema_es_valido(self):
+        imprimir_separador("test_el_esquema_es_valido")
         Draft202012Validator.check_schema(ESQUEMA)
 
     def test_el_ejemplo_cumple_el_esquema_y_la_api_lo_acepta(self):
+        imprimir_separador("test_el_ejemplo_cumple_el_esquema_y_la_api_lo_acepta")
         datos = self.ejemplo()
         VALIDADOR.validate(datos)
         r = self.client.post("/api/partidas/", datos, format="json")
         self.assertEqual(r.status_code, 201)
 
     def test_resultado_con_campos_faltantes_da_400(self):
+        imprimir_separador("test_resultado_con_campos_faltantes_da_400")
         faltantes = [("match_id", None), ("jugadores", None)] + [
             (campo, 0) for campo in ESQUEMA["$defs"]["jugador"]["required"]
         ]
