@@ -1,6 +1,7 @@
 # Create your tests here.
 import copy
 import json
+import re
 from pathlib import Path
 from unittest import mock
 
@@ -424,3 +425,161 @@ class ContratoResultadoTests(APITestCase):
                 r = self.client.post("/api/partidas/", datos, format="json")
                 self.assertEqual(r.status_code, 400)
         self.assertEqual(Partida.objects.count(), 0)
+
+
+# Derechos ARCO: recuperar la contraseña y eliminar la cuenta
+
+
+class CuentaArcoTests(APITestCase):
+    def setUp(self):
+        cache.clear()  # el login y la recuperación tienen límite por minuto
+        self.jugador = Jugador.objects.create_user(
+            "oso_rojo", email="rojo@correo.com", password="Peluche-Seguro-1"
+        )
+        self.rival = Jugador.objects.create_user(
+            "oso_azul", password="Peluche-Seguro-2"
+        )
+
+    def entrar(self, password="Peluche-Seguro-1", cliente="web"):
+        return self.client.post(
+            "/api/auth/login/",
+            {"username": "oso_rojo", "password": password, "cliente": cliente},
+            format="json",
+        )
+
+    def pedir_enlace(self):
+        self.client.post(
+            "/api/auth/recuperar/", {"email": "ROJO@correo.com"}, format="json"
+        )
+        enlace = re.search(r"uid=([^&\s]+)&token=([^\s]+)", mail.outbox[-1].body)
+        return enlace.group(1), enlace.group(2)
+
+    def test_recuperar_con_correo_registrado_envia_enlace(self):
+        imprimir_separador("test_recuperar_con_correo_registrado_envia_enlace")
+        r = self.client.post(
+            "/api/auth/recuperar/", {"email": "Rojo@Correo.com"}, format="json"
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ["rojo@correo.com"])
+        self.assertIn("/#/restablecer?uid=", mail.outbox[0].body)
+
+    def test_recuperar_con_correo_desconocido_responde_igual(self):
+        imprimir_separador("test_recuperar_con_correo_desconocido_responde_igual")
+        conocido = self.client.post(
+            "/api/auth/recuperar/", {"email": "rojo@correo.com"}, format="json"
+        )
+        desconocido = self.client.post(
+            "/api/auth/recuperar/", {"email": "nadie@correo.com"}, format="json"
+        )
+        self.assertEqual(desconocido.status_code, 200)
+        self.assertEqual(desconocido.data, conocido.data)
+        self.assertEqual(len(mail.outbox), 1)  # solo el del correo registrado
+
+    def test_restablecer_cambia_la_contrasena_y_cierra_sesiones(self):
+        imprimir_separador("test_restablecer_cambia_la_contrasena_y_cierra_sesiones")
+        viejo = self.entrar(cliente="juego").data["token"]
+        uid, token = self.pedir_enlace()
+        r = self.client.post(
+            "/api/auth/restablecer/",
+            {"uid": uid, "token": token, "password": "Peluche-Nuevo-9"},
+            format="json",
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(TokenCliente.objects.filter(jugador=self.jugador).count(), 0)
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + viejo)
+        self.assertEqual(self.client.get("/api/yo/").status_code, 401)
+        self.client.credentials()
+        self.assertEqual(self.entrar().status_code, 400)
+        self.assertEqual(self.entrar("Peluche-Nuevo-9").status_code, 200)
+
+    def test_enlace_de_restablecer_solo_sirve_una_vez(self):
+        imprimir_separador("test_enlace_de_restablecer_solo_sirve_una_vez")
+        uid, token = self.pedir_enlace()
+        datos = {"uid": uid, "token": token, "password": "Peluche-Nuevo-9"}
+        self.assertEqual(
+            self.client.post(
+                "/api/auth/restablecer/", datos, format="json"
+            ).status_code,
+            200,
+        )
+        datos["password"] = "Otra-Clave-77"
+        self.assertEqual(
+            self.client.post(
+                "/api/auth/restablecer/", datos, format="json"
+            ).status_code,
+            400,
+        )
+
+    def test_restablecer_con_enlace_invalido_o_contrasena_debil_da_400(self):
+        imprimir_separador(
+            "test_restablecer_con_enlace_invalido_o_contrasena_debil_da_400"
+        )
+        uid, token = self.pedir_enlace()
+        invalido = self.client.post(
+            "/api/auth/restablecer/",
+            {"uid": uid, "token": "falso-123", "password": "Peluche-Nuevo-9"},
+            format="json",
+        )
+        self.assertEqual(invalido.status_code, 400)
+        debil = self.client.post(
+            "/api/auth/restablecer/",
+            {"uid": uid, "token": token, "password": "123"},
+            format="json",
+        )
+        self.assertEqual(debil.status_code, 400)
+        self.assertIn("password", debil.data)
+        self.jugador.refresh_from_db()
+        self.assertTrue(self.jugador.check_password("Peluche-Seguro-1"))
+
+    def test_eliminar_cuenta_con_contrasena_incorrecta_da_400(self):
+        imprimir_separador("test_eliminar_cuenta_con_contrasena_incorrecta_da_400")
+        token = self.entrar().data["token"]
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + token)
+        r = self.client.post(
+            "/api/yo/eliminar/", {"password": "No-Es-Esta"}, format="json"
+        )
+        self.assertEqual(r.status_code, 400)
+        self.jugador.refresh_from_db()
+        self.assertTrue(self.jugador.is_active)
+
+    def test_eliminar_cuenta_anonimiza_y_cierra_sesiones(self):
+        imprimir_separador("test_eliminar_cuenta_anonimiza_y_cierra_sesiones")
+        # Una partida contra el rival: debe seguir contando para él
+        partida = Partida.objects.create(match_id="arco-1", reportada_por=self.rival)
+        Participacion.objects.create(
+            partida=partida,
+            jugador=self.jugador,
+            puntos=100,
+            kills=1,
+            resultado="derrota",
+        )
+        Participacion.objects.create(
+            partida=partida,
+            jugador=self.rival,
+            puntos=400,
+            kills=2,
+            resultado="victoria",
+        )
+        web = self.entrar().data["token"]
+        juego = self.entrar(cliente="juego").data["token"]
+
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + web)
+        r = self.client.post(
+            "/api/yo/eliminar/", {"password": "Peluche-Seguro-1"}, format="json"
+        )
+        self.assertEqual(r.status_code, 204)
+
+        self.jugador.refresh_from_db()
+        self.assertEqual(self.jugador.username, f"eliminado_{self.jugador.id}")
+        self.assertEqual(self.jugador.email, "")
+        self.assertFalse(self.jugador.is_active)
+        self.assertFalse(self.jugador.has_usable_password())
+        for token in (web, juego):
+            self.client.credentials(HTTP_AUTHORIZATION="Token " + token)
+            self.assertEqual(self.client.get("/api/yo/").status_code, 401)
+        self.client.credentials()
+        self.assertEqual(self.entrar().status_code, 400)
+        nombres = [j["username"] for j in self.client.get("/api/ranking/").data]
+        self.assertNotIn(self.jugador.username, nombres)
+        self.assertEqual(Participacion.objects.filter(partida=partida).count(), 2)
