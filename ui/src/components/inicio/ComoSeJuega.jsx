@@ -103,7 +103,7 @@ export default function ComoSeJuega() {
 
         <Reveal className="toon-lg mt-14 rounded-[2rem] bg-night p-6 text-paper sm:p-10">
           <h3 className="mb-6 text-center text-3xl text-sun sm:text-4xl">Sistema de puntos</h3>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-5 sm:grid-cols-3">
             {PUNTOS.map((p) => (
               <div key={p.texto} className={`toon-sm rounded-2xl p-5 text-center text-ink ${p.color}`}>
                 <strong className="block font-display text-5xl sm:text-6xl">{p.valor}</strong>
