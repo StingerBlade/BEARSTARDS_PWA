@@ -7,7 +7,7 @@ const EQUIPO = [
   { iniciales: 'GM', nombre: 'Guillermo Martínez', rol: 'Product Owner · App móvil', color: 'bg-pink' },
   { iniciales: 'AA', nombre: 'Angel Arras', rol: 'Scrum Master · Web (PWA) y backend', color: 'bg-sky' },
   { iniciales: 'VH', nombre: 'Victor Hugo Baeza', rol: 'Arte 3D y animación', color: 'bg-mint' },
-  { iniciales: 'GG', nombre: 'Angel Guillermo González', rol: 'Gameplay y backend', color: 'bg-sun' },
+  { iniciales: 'GG', nombre: 'Angel Guillermo González', rol: 'Gameplay', color: 'bg-sun' },
   { iniciales: 'DM', nombre: 'Dylan Muñoz', rol: 'Red e integración', color: 'bg-tangerine' },
   { iniciales: 'JC', nombre: 'Jesús Castilla', rol: 'IA de NPC y app móvil', color: 'bg-pink' },
 ]
