@@ -6,7 +6,7 @@ Banco de pruebas de la PWA de **Little Bearstards** conectada al backend Django 
 - **Envío (`POST`)** de una transacción nueva desde la PWA: el **registro de un usuario**.
 - **Persistencia e integridad** de los datos en PostgreSQL, antes y después del envío.
 - **Respuesta** del backend (códigos, tiempos, memoria y consultas SQL) y **comportamiento offline** de la PWA.
-- **Reglas del backend** con los 28 tests automáticos (16 del laboratorio original y 12 de la integración con el juego: tokens por cliente, abandono y contrato JSON).
+- **Reglas del backend** con los 35 tests automáticos (16 del laboratorio original, 12 de la integración con el juego: tokens por cliente, abandono y contrato JSON, y 7 de recuperar la contraseña y eliminar la cuenta).
 
 ← [Volver al README principal](../../README.md) · [Backend](../../backend/README.md) · [Interfaz](../../ui/README.md)
 
@@ -168,7 +168,7 @@ Guarda cada captura en `evidencias/` con un número consecutivo (por ejemplo `06
 | P7 | Logs del backend | Revisar la terminal de `runserver` tras P2–P6 | Una línea por petición: método, ruta, código, tiempo, tamaños, memoria y consultas SQL | Captura de la terminal |
 | P8 | Modo offline | Abrir la PWA una vez con conexión. Luego F12 → Network → **Offline** y recargar | La app abre igual y el ranking muestra la última copia guardada; las respuestas dicen *(ServiceWorker)* | **Application → Manifest**, **Service workers** (`sw.js` activo) y **Cache Storage** (`workbox-precache` y `api-ranking`) |
 | P9 | Sincronización offline/online | Sin sesión, con **Offline**: registrar un usuario. Después volver a **No throttling** | Sin conexión: mensaje *"el registro quedó en cola"* y la petición guardada en IndexedDB. Al reconectar: `POST /api/auth/registro/` → 201, la cola se vacía y el usuario aparece en el ranking y en la base | **Application → IndexedDB → `workbox-background-sync` → `requests`** antes y después, Network con el 201, y `03_consultas.sql` |
-| P10 | Tests automáticos | Desde `backend/`, con el entorno activo: `python manage.py test` | `Ran 28 tests` y `OK`. Cada test imprime un separador con su nombre (`--- TEST: … ---`) | Captura de la terminal |
+| P10 | Tests automáticos | Desde `backend/`, con el entorno activo: `python manage.py test` | `Ran 35 tests` y `OK`. Cada test imprime un separador con su nombre (`--- TEST: … ---`) | Captura de la terminal |
 
 Para ejecutar las consultas de verificación:
 

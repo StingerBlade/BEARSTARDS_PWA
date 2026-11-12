@@ -63,9 +63,12 @@ La PWA obtiene todos sus datos de la API REST con `fetch` y rutas relativas (`/a
 | `POST /api/auth/registro/` | No | Crear cuenta (`cliente` opcional: `web` o `juego`); devuelve el token y el jugador |
 | `POST /api/auth/login/` | No | Iniciar sesión (`cliente` opcional: `web` o `juego`); devuelve el token y el jugador |
 | `POST /api/auth/logout/` | Sí | Cerrar sesión (solo borra el token de ese cliente) |
-| `GET /api/ranking/` | No | Lista del ranking (top 10 por puntos totales) |
+| `POST /api/auth/recuperar/` | No | Manda al correo el enlace para restablecer la contraseña; responde lo mismo exista o no la cuenta |
+| `POST /api/auth/restablecer/` | No | Cambia la contraseña con el enlace (vence en 2 horas, un solo uso) y cierra todas las sesiones |
+| `GET /api/ranking/` | No | Lista del ranking (top 10 por puntos totales, solo cuentas activas) |
 | `GET /api/yo/` | Sí | Estadísticas del jugador para el Panel |
 | `GET /api/yo/partidas/` | Sí | Historial de las últimas 20 partidas del jugador |
+| `POST /api/yo/eliminar/` | Sí | Eliminar la cuenta con la contraseña: borra correo y sesiones, y deja el nombre anónimo; las partidas se conservan para el rival |
 | `POST /api/partidas/` | Sí | Lo usa el juego al terminar una partida (no la PWA). El cuerpo está definido en el contrato [`backend/contratos/resultado-partida.schema.json`](backend/contratos/resultado-partida.schema.json); el juego tiene una copia idéntica |
 | `GET /api/health/` | No | Lo usan Render y el CI para saber si el servicio está arriba |
 
@@ -153,8 +156,13 @@ flowchart LR
 | `/#/ranking` | Ranking | Podio de los 3 primeros, tabla de jugadores por puntos totales, buscador por nombre y la posición del jugador con sesión iniciada | No |
 | `/#/login` | Iniciar sesión | Usuario y contraseña | No |
 | `/#/registro` | Registro | Usuario, correo (para el correo de bienvenida) y contraseña (mínimo 8 caracteres) | No |
-| `/#/panel` | Panel | Estadísticas del jugador e historial de sus últimas 20 partidas | Sí |
+| `/#/panel` | Panel | Estadísticas del jugador, historial de sus últimas 20 partidas y opción para eliminar la cuenta | Sí |
 | `/#/laboratorio` | Laboratorio | Interfaz mínima del laboratorio de pruebas: consulta y envía datos a la API | No |
+| `/#/recuperar` | Recuperar contraseña | Pide el correo para mandar el enlace | No |
+| `/#/restablecer` | Restablecer contraseña | Nueva contraseña, desde el enlace del correo | No |
+| `/#/privacidad` | Aviso de privacidad | Qué datos se guardan y cómo ejercer los derechos ARCO | No |
+| `/#/terminos` | Términos y condiciones | Reglas de uso de la web y del juego | No |
+| `/#/cuenta-eliminada` | Cuenta eliminada | Confirmación después de eliminar la cuenta desde el Panel | No |
 
 **Datos que muestra cada pantalla**
 
@@ -162,7 +170,7 @@ flowchart LR
 - **Panel, estadísticas:** partidas, victorias, derrotas, empates, kills, puntos totales y mejor puntuación.
 - **Panel, historial:** por partida, la fecha, los puntos, las kills, el resultado (victoria, derrota o empate) y si fue por abandono.
 
-La PWA solo muestra los datos de la sección *Datos que maneja*. El correo solo se usa para la bienvenida: la PWA lo pide al registrarse y en la API es opcional (el juego no lo pide). No se guardan rachas, logros ni rankings por periodo.
+La PWA solo muestra los datos de la sección *Datos que maneja*. El correo solo se usa para la bienvenida y para recuperar la contraseña: la PWA lo pide al registrarse y en la API es opcional (el juego no lo pide). No se guardan rachas, logros ni rankings por periodo.
 
 - Se usa `HashRouter`: las rutas van después del `#`, así Django solo tiene que servir `index.html`.
 - Si alguien entra a `/#/panel` sin sesión, se le manda a iniciar sesión.
@@ -420,7 +428,7 @@ Corren **siempre** en los PR hacia `main` o `development` y en los push a esas r
 | Check | Qué revisa |
 |---|---|
 | `Frontend CI / lint-and-build` | En `ui/`: `npm ci`, `npm run lint` y `npm run build` con Node 22. Guarda el build como artefacto por 7 días. |
-| `Backend CI / lint-and-test` | En `backend/`: `ruff check`, que no falten migraciones (`makemigrations --check`) y `manage.py test` (28 tests), contra un PostgreSQL temporal. |
+| `Backend CI / lint-and-test` | En `backend/`: `ruff check`, que no falten migraciones (`makemigrations --check`) y `manage.py test` (35 tests), contra un PostgreSQL temporal. |
 | `Docker CI / build-and-smoke-test` | Construye la imagen con el `Dockerfile`, la arranca como en Render (`PORT=10000`) contra un PostgreSQL temporal y revisa que respondan `/api/health/` y la PWA. |
 
 - El CI **nunca se conecta a Supabase**: usa su propia base de datos desechable, así que los tests no tocan datos reales.

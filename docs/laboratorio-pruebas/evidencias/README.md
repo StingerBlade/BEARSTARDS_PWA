@@ -195,7 +195,7 @@ El registro es la petición más lenta porque el hash de la contraseña (PBKDF2)
 ## Parte 6 · Tests automáticos
 
 ### Paso 15 · Correr los tests del backend
-Además de las pruebas manuales, el backend tiene 28 tests automáticos en `backend/jugadores/tests.py`. Se ejecutaron desde `backend/`, con el entorno virtual activo:
+Además de las pruebas manuales, el backend tiene 35 tests automáticos en `backend/jugadores/tests.py`. Se ejecutaron desde `backend/`, con el entorno virtual activo:
 
     python manage.py test
 
@@ -203,16 +203,16 @@ Django crea una base de datos temporal, corre los tests y la borra al terminar, 
 
 Antes de correr, cada test imprime un separador con su nombre (`--------------- TEST: test_empate ---------------`), así en la captura se ve qué log pertenece a cada test.
 
-**Resultado:** `Ran 28 tests` y `OK`.
+**Resultado:** `Ran 35 tests` y `OK`.
 
 Para tomar la captura de un solo grupo o de un solo test:
 
     python manage.py test jugadores.tests.TokenPorClienteTests
     python manage.py test jugadores.tests.ReportarPartidaTests.test_abandono_valido_suma_estadisticas
 
-Los tests 1 a 16 son los del laboratorio original. Los 17 a 28 se agregaron con la integración del juego: tokens por cliente, abandono de partida y el contrato JSON del resultado.
+Los tests 1 a 16 son los del laboratorio original. Los 17 a 28 se agregaron con la integración del juego: tokens por cliente, abandono de partida y el contrato JSON del resultado. Los 29 a 35 cubren recuperar la contraseña y eliminar la cuenta.
 
-Los 28 tests, por grupo:
+Los 35 tests, por grupo:
 
 **Grupo 1 · `RegistroLoginTests`: cuentas y sesiones**
 
@@ -269,6 +269,16 @@ El cuerpo de `POST /api/partidas/` está definido en `backend/contratos/resultad
 27. **`test_el_ejemplo_cumple_el_esquema_y_la_api_lo_acepta`**: el ejemplo del contrato cumple el esquema y la API lo guarda con **201**.
 28. **`test_resultado_con_campos_faltantes_da_400`**: si falta cualquier campo obligatorio, el esquema lo rechaza y la API responde **400**, sin guardar ninguna partida.
 
+**Grupo 7 · `CuentaArcoTests`: recuperar la contraseña y eliminar la cuenta**
+
+29. **`test_recuperar_con_correo_registrado_envia_enlace`**: pedir la recuperación con un correo registrado (sin importar mayúsculas) responde **200** y manda **un** correo con el enlace para restablecer.
+30. **`test_recuperar_con_correo_desconocido_responde_igual`**: con un correo que no existe la respuesta es **la misma**, así no se puede averiguar qué correos tienen cuenta; no se manda nada.
+31. **`test_restablecer_cambia_la_contrasena_y_cierra_sesiones`**: con el enlace se cambia la contraseña y se borran **todos** los tokens (web y juego); la contraseña vieja ya no entra.
+32. **`test_enlace_de_restablecer_solo_sirve_una_vez`**: usar el mismo enlace por segunda vez responde **400**.
+33. **`test_restablecer_con_enlace_invalido_o_contrasena_debil_da_400`**: un enlace falso o una contraseña débil responden **400** y la contraseña no cambia.
+34. **`test_eliminar_cuenta_con_contrasena_incorrecta_da_400`**: sin la contraseña correcta la cuenta no se elimina y sigue activa.
+35. **`test_eliminar_cuenta_anonimiza_y_cierra_sesiones`**: eliminar la cuenta responde **204**, cambia el nombre a `eliminado_<id>`, borra el correo y las sesiones, la quita del ranking y sus partidas siguen contando para el rival.
+
 Los mismos tests corren solos en GitHub Actions (*Backend CI / lint-and-test*) en cada push y Pull Request, contra un PostgreSQL 16 temporal.
 
 ![Tests del backend](24-tests.png)
@@ -287,4 +297,4 @@ Los mismos tests corren solos en GitHub Actions (*Backend CI / lint-and-test*) e
 | Modo offline | La app y el ranking funcionan sin conexión | 7, 11 |
 | Sincronización offline/online | El registro sin red se envió solo al volver la conexión | 12 |
 | Respuesta del backend | Tiempo, tamaños, memoria y consultas SQL de cada petición | 14 |
-| Reglas del backend con tests automáticos | 28 tests en verde (`Ran 28 tests … OK`) | 15 |
+| Reglas del backend con tests automáticos | 35 tests en verde (`Ran 35 tests … OK`) | 15 |
