@@ -6,6 +6,7 @@
     Dylan Munoz Flores
     Guillermo Martinez Delgadillo
     Victor Hugo Baeza Rocha
+    Jesus Arturo Castilla Gonzalez
 
 
 PWA de **Little Bearstards** (Turbo Studios). Presenta el juego, muestra el ranking de jugadores, permite registrarse e iniciar sesión, y recibe desde el juego (Unity) el resultado de cada partida.
