@@ -2,12 +2,14 @@
 import copy
 import json
 import re
+import threading
 from pathlib import Path
 from unittest import mock
 
 from django.conf import settings
 from django.core import mail
 from django.core.cache import cache
+from django.test import override_settings
 from jsonschema import Draft202012Validator
 from rest_framework.test import APITestCase
 
@@ -158,6 +160,8 @@ class TokenPorClienteTests(APITestCase):
 # RANKING
 
 
+# En estas pruebas el correo se manda en la misma petición para revisar mail.outbox
+@override_settings(CORREO_EN_SEGUNDO_PLANO=False)
 class CorreoBienvenidaTests(APITestCase):
     def registrar(self, **extra):
         datos = {"username": "oso_correo", "password": "Peluche-Seguro-1", **extra}
@@ -210,6 +214,27 @@ class CorreoBienvenidaTests(APITestCase):
             r = self.registrar(email="oso@ejemplo.com")
         self.assertEqual(r.status_code, 201)
         self.assertTrue(Jugador.objects.filter(username="oso_correo").exists())
+
+    @override_settings(CORREO_EN_SEGUNDO_PLANO=True)
+    def test_el_registro_no_espera_al_correo(self):
+        imprimir_separador("test_el_registro_no_espera_al_correo")
+        liberar = threading.Event()
+        enviado = threading.Event()
+
+        def envio_lento(*args, **kwargs):
+            # Simula un SMTP lento: no termina hasta que la prueba lo libera
+            liberar.wait(5)
+            enviado.set()
+            return 1
+
+        with mock.patch("django.core.mail.EmailMultiAlternatives.send", envio_lento):
+            r = self.registrar(email="oso@ejemplo.com")
+            # La API ya respondió aunque el correo sigue en camino
+            self.assertEqual(r.status_code, 201)
+            self.assertIn("token", r.data)
+            self.assertFalse(enviado.is_set())
+            liberar.set()
+            self.assertTrue(enviado.wait(5))
 
 
 class RankingTests(APITestCase):

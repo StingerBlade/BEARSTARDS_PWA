@@ -1,4 +1,5 @@
 import logging
+import threading
 from email.mime.image import MIMEImage
 from pathlib import Path
 
@@ -41,6 +42,23 @@ def enviar_bienvenida(jugador):
         return False
     logger.info("Bienvenida enviada: id=%s", jugador.id)
     return True
+
+
+def enviar_bienvenida_en_segundo_plano(jugador):
+    """Manda la bienvenida en un hilo aparte para no retrasar la respuesta del registro.
+
+    El envío por SMTP (Resend) tarda más que el resto del registro; así el jugador
+    recibe su token de inmediato. Los errores ya los registra enviar_bienvenida.
+    Con CORREO_EN_SEGUNDO_PLANO = False se manda en la misma petición.
+    """
+    if not settings.CORREO_EN_SEGUNDO_PLANO:
+        enviar_bienvenida(jugador)
+        return None
+    hilo = threading.Thread(
+        target=enviar_bienvenida, args=(jugador,), name="correo-bienvenida", daemon=True
+    )
+    hilo.start()
+    return hilo
 
 
 def enviar_recuperacion(jugador):
