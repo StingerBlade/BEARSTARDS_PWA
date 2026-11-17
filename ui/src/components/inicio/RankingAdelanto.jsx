@@ -48,7 +48,7 @@ export default function RankingAdelanto() {
           {ranking.datos?.slice(0, 5).map((j, i) => (
             <div key={j.id} className={`${columnas} items-center border-b-2 border-ink/15 py-3 font-semibold last:border-0`}>
               <span className="font-display text-xl">
-                {i < 3 ? <img src={MEDALLAS[i]} alt={`Puesto ${i + 1}`} className="size-8" /> : i + 1}
+                {i < 3 ? <img loading="lazy" decoding="async" src={MEDALLAS[i]} alt={`Puesto ${i + 1}`} className="size-8" /> : i + 1}
               </span>
               <span className="truncate">{j.username}</span>
               <span className="text-right text-ink/70">{j.partidas}</span>

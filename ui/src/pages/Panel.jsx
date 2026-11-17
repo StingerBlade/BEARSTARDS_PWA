@@ -89,7 +89,7 @@ function SinSesion() {
   return (
     <section className="grid min-h-svh place-items-center bg-night px-5 pt-28 pb-16 text-center">
       <div>
-        <img src={sinPartidas} alt="" className="mx-auto mb-6 h-48 w-auto animate-bob" />
+        <img loading="lazy" decoding="async" src={sinPartidas} alt="" className="mx-auto mb-6 h-48 w-auto animate-bob" />
         <p className={chip}>Mi panel</p>
         <h1 className="mb-4 text-[clamp(2.4rem,6vw,4rem)] text-sun text-outline">Inicia sesión para verlo</h1>
         <p className="mx-auto mb-8 max-w-md text-paper/80">Aquí verás tus estadísticas y tus últimas partidas.</p>

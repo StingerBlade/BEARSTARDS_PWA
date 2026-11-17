@@ -30,6 +30,7 @@ export default function Galeria() {
                   src={c.src}
                   alt={c.alt}
                   loading="lazy"
+                  decoding="async"
                   className="toon min-h-48 w-full flex-1 rounded-3xl border-4 object-cover"
                 />
                 <figcaption className="pt-3 text-sm text-paper/80">{c.pie}</figcaption>

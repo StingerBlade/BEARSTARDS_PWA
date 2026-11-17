@@ -5,11 +5,42 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 const proxy = { '/api': 'http://localhost:8000' }
 
+// Pide desde el HTML la imagen de la portada y la fuente del título, para que el navegador
+// no espere a que cargue el JavaScript para descubrirlas. Los nombres llevan hash, por eso
+// se buscan en el build.
+function precargarPortada() {
+  return {
+    name: 'precargar-portada',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'post',
+      handler(html, { bundle }) {
+        const archivos = Object.keys(bundle ?? {})
+        const buscar = (re) => archivos.find((f) => re.test(f))
+        const movil = buscar(/render-menu-movil-[\w-]+\.webp$/)
+        const escritorio = buscar(/render-menu-(?!movil)[\w-]+\.webp$/)
+        const fuente = buscar(/TasteBread-[\w-]+\.otf$/)
+        const tags = []
+        if (movil) {
+          tags.push({ tag: 'link', attrs: { rel: 'preload', as: 'image', href: `/${movil}`, media: '(max-width: 640px)', fetchpriority: 'high' }, injectTo: 'head' })
+        }
+        if (escritorio) {
+          tags.push({ tag: 'link', attrs: { rel: 'preload', as: 'image', href: `/${escritorio}`, media: '(min-width: 641px)', fetchpriority: 'high' }, injectTo: 'head' })
+        }
+        if (fuente) {
+          tags.push({ tag: 'link', attrs: { rel: 'preload', as: 'font', type: 'font/otf', href: `/${fuente}`, crossorigin: '' }, injectTo: 'head' })
+        }
+        return tags
+      },
+    },
+  }
+}
 
 export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
+    precargarPortada(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['logo192x192.png'],

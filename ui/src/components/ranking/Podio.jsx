@@ -22,7 +22,7 @@ export default function Podio({ jugadores }) {
           <Reveal as="li" key={e.puesto} delay={i * 100} className="text-center">
             <Oso color={e.oso} mono={e.mono} className="mx-auto mb-2 h-24 w-auto sm:h-36" />
             <div className={`toon flex flex-col items-center justify-start rounded-t-3xl px-1.5 py-3 text-ink sm:p-3 ${e.fondo} ${e.alto}`}>
-              <img src={e.medalla} alt={`Puesto ${e.puesto}`} className="size-14 sm:size-16" />
+              <img loading="lazy" decoding="async" src={e.medalla} alt={`Puesto ${e.puesto}`} className="size-14 sm:size-16" />
               <strong title={j.username} className="max-w-full truncate font-display text-xs sm:text-2xl">
                 {j.username}
               </strong>

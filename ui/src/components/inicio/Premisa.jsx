@@ -66,7 +66,7 @@ export default function Premisa() {
               className={`toon rounded-3xl p-6 text-ink transition-transform hover:-translate-y-2 hover:rotate-0 ${t.color}`}
             >
               <span className="mb-4 grid size-16 place-items-center rounded-2xl border-[3px] border-ink bg-paper shadow-toon-sm">
-                <img src={t.icono} alt="" className="size-11 object-contain" />
+                <img loading="lazy" decoding="async" src={t.icono} alt="" className="size-11 object-contain" />
               </span>
               <h3 className="mb-2 text-2xl">{t.titulo}</h3>
               <p className="text-[0.97rem] leading-snug font-medium">{t.texto}</p>

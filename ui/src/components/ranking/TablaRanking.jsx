@@ -8,7 +8,7 @@ export default function TablaRanking({ filas, usuario, busqueda }) {
   if (!filas.length) {
     return (
       <div className="p-8 text-center">
-        <img src={sinResultados} alt="" className="mx-auto mb-4 h-40 w-auto" />
+        <img loading="lazy" decoding="async" src={sinResultados} alt="" className="mx-auto mb-4 h-40 w-auto" />
         <p className="font-semibold">Ningún jugador coincide con “{busqueda}”.</p>
       </div>
     )

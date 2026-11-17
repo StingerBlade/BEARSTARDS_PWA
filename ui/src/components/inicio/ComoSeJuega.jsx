@@ -72,6 +72,8 @@ export default function ComoSeJuega() {
                 <p className="text-ink/80">{regla.texto}</p>
               </div>
               <img
+                loading="lazy"
+                decoding="async"
                 src={regla.imagen}
                 alt=""
                 className="hidden h-28 w-44 object-contain drop-shadow-[4px_4px_0_var(--color-ink)] sm:block"
@@ -92,7 +94,7 @@ export default function ComoSeJuega() {
               delay={i * 80}
               className="toon flex flex-col items-center rounded-3xl bg-white p-4 text-center transition-transform hover:-translate-y-1 hover:rotate-0"
             >
-              <img src={d.imagen} alt="" className="mb-3 h-28 w-auto object-contain drop-shadow-[4px_4px_0_var(--color-ink)]" />
+              <img loading="lazy" decoding="async" src={d.imagen} alt="" className="mb-3 h-28 w-auto object-contain drop-shadow-[4px_4px_0_var(--color-ink)]" />
               <h4 className="text-xl">{d.texto}</h4>
               <span className={`mt-2 rounded-full border-2 border-ink px-3 py-0.5 text-sm font-semibold ${d.color}`}>
                 {d.aviso}
@@ -111,7 +113,7 @@ export default function ComoSeJuega() {
               </div>
             ))}
           </div>
-          <img src={vidaHilo} alt="" className="mx-auto mt-8 h-auto w-full max-w-xs" />
+          <img loading="lazy" decoding="async" src={vidaHilo} alt="" className="mx-auto mt-8 h-auto w-full max-w-xs" />
           <p className="mt-4 text-center text-paper/80">
             La partida dura 3 minutos con 10 segundos. Al caer, reapareces con 100 de vida y la pelea continúa. Cuando se acaba el
             tiempo, gana quien tenga más puntos; si quedan iguales, es empate.
