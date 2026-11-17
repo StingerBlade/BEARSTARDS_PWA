@@ -18,7 +18,7 @@ export default function Equipo() {
       <Ola />
       <div className="mx-auto max-w-6xl pt-8">
         <Reveal>
-          <img src={logo} alt="Turbo Studios" width="660" height="196" className="mb-10 h-24 w-auto" />
+          <img loading="lazy" decoding="async" src={logo} alt="Turbo Studios" width="660" height="196" className="mb-10 h-24 w-auto" />
         </Reveal>
         <Titulo etiqueta="El estudio" resalte="Turbo Studios." claro>
           Hecho por

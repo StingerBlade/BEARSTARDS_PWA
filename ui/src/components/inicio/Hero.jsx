@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import render from '../../assets/img/render-menu.webp'
+import renderMovil from '../../assets/img/render-menu-movil.webp'
 import { boton } from '../ui'
+
+// En celular solo se ve el centro del render: se usa un recorte vertical más ligero.
+// Se decide una vez al cargar, con el mismo corte que el preload de vite.config.js.
+const enCelular = window.matchMedia('(max-width: 640px)').matches
 
 const conMouse = () =>
   window.matchMedia('(pointer: fine)').matches && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -40,10 +45,11 @@ export default function Hero({ irA }) {
       <div aria-hidden="true" className="absolute inset-0 overflow-hidden">
         <img
           ref={imagen}
-          src={render}
+          src={enCelular ? renderMovil : render}
           alt=""
-          width="1280"
-          height="720"
+          width={enCelular ? 720 : 1280}
+          height={enCelular ? 1080 : 720}
+          fetchPriority="high"
           className="absolute inset-0 size-full scale-[1.06] object-cover object-[center_40%] transition-transform duration-300 ease-out"
         />
       </div>

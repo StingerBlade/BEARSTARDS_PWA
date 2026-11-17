@@ -77,7 +77,7 @@ export default function Armas() {
             >
               <div className={`relative grid h-64 place-items-center overflow-hidden border-b-4 border-ink p-6 ${a.color}`}>
                 <div aria-hidden="true" className={puntos} />
-                <img src={a.imagen} alt={a.alt} className="relative h-52 w-full animate-wiggle object-contain drop-shadow-[6px_6px_0_var(--color-ink)]" />
+                <img loading="lazy" decoding="async" src={a.imagen} alt={a.alt} className="relative h-52 w-full animate-wiggle object-contain drop-shadow-[6px_6px_0_var(--color-ink)]" />
               </div>
               <div className="p-6 sm:p-8">
                 <span className="mb-3 inline-block rounded-full border-[3px] border-ink bg-sun px-3 py-0.5 text-sm font-bold tracking-wide uppercase">
@@ -104,7 +104,7 @@ export default function Armas() {
             >
               <div className={`relative grid h-44 place-items-center overflow-hidden border-b-4 border-ink ${o.color}`}>
                 <div aria-hidden="true" className={puntos} />
-                <img src={o.imagen} alt="" className="relative h-32 w-auto object-contain drop-shadow-[5px_5px_0_var(--color-ink)]" />
+                <img loading="lazy" decoding="async" src={o.imagen} alt="" className="relative h-32 w-auto object-contain drop-shadow-[5px_5px_0_var(--color-ink)]" />
               </div>
               <div className="p-6">
                 <span className="mb-3 inline-block rounded-full border-[3px] border-ink bg-sun px-3 py-0.5 text-sm font-bold tracking-wide uppercase">

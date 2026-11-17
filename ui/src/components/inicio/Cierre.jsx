@@ -8,7 +8,7 @@ export default function Cierre() {
     <section className="relative overflow-hidden bg-night px-5 py-28 text-center md:py-36">
       <div aria-hidden="true" className="absolute inset-x-0 bottom-0 mx-auto h-64 max-w-3xl rounded-t-full bg-tangerine/40 blur-3xl" />
       <Reveal className="relative mx-auto max-w-3xl">
-        <img src={oso} alt="" className="mx-auto mb-4 h-40 w-auto animate-bob" />
+        <img loading="lazy" decoding="async" src={oso} alt="" className="mx-auto mb-4 h-40 w-auto animate-bob" />
         <h2 className="mb-5 text-[clamp(2.6rem,8vw,5.5rem)] text-paper text-outline">
           La tienda está <span className="text-sun text-outline">por cerrar.</span>
         </h2>

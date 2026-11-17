@@ -4,6 +4,8 @@ import ola from '../assets/svg/ola.svg'
 export default function Ola({ abajo = false }) {
   return (
     <img
+      loading="lazy"
+      decoding="async"
       src={ola}
       alt=""
       aria-hidden="true"

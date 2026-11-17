@@ -1,20 +1,23 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { HashRouter, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import Footer from './components/Footer'
 import Header from './components/Header'
 import Pendiente from './components/Pendiente'
 import ProgresoScroll from './components/ProgresoScroll'
-import CuentaEliminada from './pages/CuentaEliminada'
 import Home from './pages/Home'
-import Laboratorio from './pages/Laboratorio'
-import Login from './pages/Login'
-import Panel from './pages/Panel'
-import Privacidad from './pages/Privacidad'
-import Ranking from './pages/Ranking'
-import Recuperar from './pages/Recuperar'
-import Registro from './pages/Registro'
-import Restablecer from './pages/Restablecer'
-import Terminos from './pages/Terminos'
+
+// El inicio va en el paquete principal; las demás pantallas se descargan al abrirlas
+const CuentaEliminada = lazy(() => import('./pages/CuentaEliminada'))
+const Laboratorio = lazy(() => import('./pages/Laboratorio'))
+const Login = lazy(() => import('./pages/Login'))
+const Panel = lazy(() => import('./pages/Panel'))
+const Privacidad = lazy(() => import('./pages/Privacidad'))
+const Ranking = lazy(() => import('./pages/Ranking'))
+const Recuperar = lazy(() => import('./pages/Recuperar'))
+const Registro = lazy(() => import('./pages/Registro'))
+const Restablecer = lazy(() => import('./pages/Restablecer'))
+const Terminos = lazy(() => import('./pages/Terminos'))
+
 // Al cambiar de pantalla se empieza arriba
 function AlInicio() {
   const { pathname } = useLocation()
@@ -40,7 +43,15 @@ function Layout() {
       <ProgresoScroll />
       <Header />
       <main id="contenido" tabIndex={-1} className="outline-none">
-        <Outlet />
+        <Suspense
+          fallback={
+            <p role="status" className="min-h-[60vh] p-8 pt-32 text-center font-semibold">
+              Cargando…
+            </p>
+          }
+        >
+          <Outlet />
+        </Suspense>
       </main>
       <Footer />
     </>

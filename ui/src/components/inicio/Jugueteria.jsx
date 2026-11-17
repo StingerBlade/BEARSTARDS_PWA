@@ -59,7 +59,7 @@ export default function Jugueteria() {
                     <p className="text-ink/80">{f.texto}</p>
                   </div>
                   {f.imagen && (
-                    <img src={f.imagen} alt="" className="-my-6 h-16 w-auto rotate-3 sm:h-24 drop-shadow-[3px_3px_0_var(--color-ink)]" />
+                    <img loading="lazy" decoding="async" src={f.imagen} alt="" className="-my-6 h-16 w-auto rotate-3 sm:h-24 drop-shadow-[3px_3px_0_var(--color-ink)]" />
                   )}
                 </li>
               ))}
@@ -76,7 +76,7 @@ export default function Jugueteria() {
           </Reveal>
         </div>
         <Reveal r={1.5} className="toon-lg rounded-[2rem] bg-night p-4">
-          <img src={mapa} alt="Esquema de los tres pasillos de la juguetería" className="block w-full" />
+          <img loading="lazy" decoding="async" src={mapa} alt="Esquema de los tres pasillos de la juguetería" className="block w-full" />
         </Reveal>
       </div>
       <Ola abajo />

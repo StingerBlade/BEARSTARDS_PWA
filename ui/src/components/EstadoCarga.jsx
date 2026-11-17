@@ -23,7 +23,7 @@ export default function EstadoCarga({ consulta, vacio, imagen, className = '' })
   if (!consulta.datos?.length) {
     return (
       <div className={`p-8 text-center ${className}`}>
-        {imagen && <img src={imagen} alt="" className="mx-auto mb-4 h-40 w-auto" />}
+        {imagen && <img loading="lazy" decoding="async" src={imagen} alt="" className="mx-auto mb-4 h-40 w-auto" />}
         <p className="font-semibold">{vacio}</p>
       </div>
     )
