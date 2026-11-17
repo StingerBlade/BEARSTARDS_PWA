@@ -162,6 +162,8 @@ if RESEND_API_KEY:
 else:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 EMAIL_TIMEOUT = 10
+# La bienvenida se manda en un hilo aparte para que el registro responda sin esperarla
+CORREO_EN_SEGUNDO_PLANO = True
 DEFAULT_FROM_EMAIL = os.environ.get(
     "DEFAULT_FROM_EMAIL", "Little Bearstards <hola@littlebearstards.com>"
 )
