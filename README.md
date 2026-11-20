@@ -359,7 +359,7 @@ erDiagram
 
 ### Reglas del juego que respetan los datos
 
-- Las partidas son 1 contra 1 y duran 3 minutos con 10 segundos.
+- Las partidas son 1 contra 1 y duran 10 minutos.
 - Gana quien tenga más puntos; si quedan iguales, es empate.
 - Eliminar al rival da puntos (200 con la aguja, 400 con la pistola de dardos) y suma una kill. Las kills solo cuentan rivales, no NPCs.
 - Los puntos de una partida pueden ser 0 o negativos: eliminar a un NPC resta 100. Por eso los puntos totales y la mejor puntuación también pueden ser negativos.
